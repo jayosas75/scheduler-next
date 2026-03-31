@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YOSAS // Neon Time Matrix 2026</title>
+
+    <!-- Tailwind v4 Browser -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .glow {
+            box-shadow: 0 0 20px rgba(0, 255, 255, .25);
+        }
+
+        .scanlines {
+            background: repeating-linear-gradient(to bottom,
+                    rgba(255, 255, 255, 0.02),
+                    rgba(255, 255, 255, 0.02) 1px,
+                    transparent 1px,
+                    transparent 3px);
+        }
+
+        /* Animated gradient shine effect */
+        @keyframes shine {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .title-shine {
+            background: linear-gradient(90deg,
+                    #0ff 0%,
+                    #f0f 15%,
+                    #ff0 30%,
+                    #0ff 45%,
+                    #0f0 60%,
+                    #f0f 75%,
+                    #0ff 100%);
+            background-size: 200% auto;
+            animation: shine 3s linear infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
+        }
+
+        /* Retro counter animation */
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .counter-pulse {
+            animation: pulse 0.3s ease-in-out;
+        }
+
+        /* Disabled row styling */
+        .row-disabled {
+            opacity: 0.3;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Cyberpunk info icon animation */
+        @keyframes glitch {
+
+            0%,
+            100% {
+                transform: translate(0);
+            }
+
+            20% {
+                transform: translate(-2px, 2px);
+            }
+
+            40% {
+                transform: translate(2px, -2px);
+            }
+
+            60% {
+                transform: translate(-2px, -2px);
+            }
+
+            80% {
+                transform: translate(2px, 2px);
+            }
+        }
+
+        @keyframes neonPulse {
+
+            0%,
+            100% {
+                text-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 15px #0ff;
+            }
+
+            50% {
+                text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff, 0 0 40px #0ff;
+            }
+        }
+
+        .cyber-info {
+            animation: neonPulse 2s ease-in-out infinite;
+            cursor: help;
+        }
+
+        .cyber-info:hover {
+            animation: glitch 0.3s ease-in-out, neonPulse 2s ease-in-out infinite;
+        }
+
+        /* Custom alert styling */
+        .custom-alert {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-black via-slate-950 to-black text-cyan-100 font-mono">
+
+    <div x-data="app()" x-init="init()" class="max-w-5xl mx-auto p-4 md:p-8 space-y-6 pb-8">
+
+        <!-- TITLE with animated shine -->
+        <h1 class="text-center text-2xl md:text-4xl font-black tracking-widest title-shine mb-6">
+            YOSAS // NEON TIME MATRIX 2026
+        </h1>
+
+        <!-- DAYS -->
+        <nav class="flex overflow-x-auto gap-2 border border-cyan-500/30 rounded-xl p-2 bg-black/60 glow">
+            <template x-for="d in days" :key="d">
+                <button @click="selectDay(d)"
+                    :class="day === d ? 'bg-cyan-500 text-black' : 'bg-black text-cyan-400 hover:bg-cyan-500/20'"
+                    class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest whitespace-nowrap transition">
+                    <span x-text="d"></span>
+                </button>
+            </template>
+        </nav>
+
+        <!-- LEGEND -->
+        <div class="relative bg-black/60 border border-cyan-500/30 rounded-2xl p-4 scanlines mt-6">
+            <div class="flex flex-wrap gap-4 items-center">
+                <template x-for="(c,key) in categories" :key="key">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full" :class="c.color"></span>
+                        <span class="text-xs uppercase tracking-wider" x-text="c.label"></span>
+                    </div>
+                </template>
+
+                <button @mouseenter="showInfo=true" @mouseleave="showInfo=false"
+                    class="ml-auto text-cyan-400 text-xl font-black cyber-info">
+                    ◈
+                </button>
+            </div>
+
+            <div x-show="showInfo" x-cloak x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
+                class="absolute top-full mt-3 left-0 right-0 bg-black border border-cyan-500/40 p-4 rounded-xl text-xs leading-relaxed glow z-10">
+                A flourishing life is built upon <b class="text-cyan-400">Health</b>, the physical and mental vitality
+                that powers your daily existence;
+                <b class="text-purple-400">Work</b>, the meaningful contribution and professional purpose you offer the
+                world;
+                <b class="text-lime-400">Personal Growth</b>, the continuous pursuit of new knowledge, skills, and
+                self-awareness;
+                <b class="text-yellow-400">Relationships</b>, the deep emotional bonds and support systems shared with
+                family and significant others;
+                and <b class="text-blue-400">Life Admin</b>, the essential logistical management that keeps your
+                personal infrastructure running smoothly.
+            </div>
+        </div>
+
+        <!-- SCHEDULE -->
+        <div class="bg-black/60 border border-cyan-500/30 rounded-3xl overflow-hidden glow mt-6">
+
+            <template x-for="(slot, idx) in slots" :key="slot.time">
+
+                <div :class="slot.deleted && 'row-disabled'"
+                    class="p-3 border-b border-cyan-500/10 hover:bg-cyan-500/5 transition">
+
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 text-xs text-cyan-400 font-bold" x-text="slot.time"></div>
+
+                        <select x-model="slot.category" @change="saveDay()" :disabled="slot.deleted"
+                            class="bg-black border border-cyan-500/30 rounded px-2 py-1 text-xs text-cyan-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <template x-for="(c,key) in categories" :key="key">
+                                <option :value="key" x-text="c.label"></option>
+                            </template>
+                        </select>
+
+                        <input x-model="slot.label" @input="saveDay()" :disabled="slot.deleted" placeholder="Activity…"
+                            class="flex-1 bg-transparent border-b border-cyan-500/30 focus:outline-none text-sm text-cyan-100 disabled:opacity-50 disabled:cursor-not-allowed" />
+
+                        <!-- Segments Button - Shows ⊕ for add, ⊙ for edit -->
+                        <button x-show="!slot.deleted" @click="openModal(idx)" type="button"
+                            class="text-cyan-400 hover:text-cyan-300 text-xl font-black transition hover:scale-110"
+                            :title="slot.segments && slot.segments.length > 0 ? 'Edit segments' : 'Add segments'">
+                            <span x-text="slot.segments && slot.segments.length > 0 ? '⊙' : '⊕'"></span>
+                        </button>
+
+                        <!-- Delete/Restore Toggle -->
+                        <button @click="toggleDelete(slot)" type="button"
+                            class="text-xl font-black transition hover:scale-110"
+                            :class="slot.deleted ? 'text-green-400 hover:text-green-300' : 'text-red-400 hover:text-red-300'"
+                            :title="slot.deleted ? 'Restore slot' : 'Disable slot'">
+                            <span x-text="slot.deleted ? '↻' : '⊗'"></span>
+                        </button>
+                    </div>
+
+                    <!-- SEGMENTS -->
+                    <div x-show="!slot.deleted && slot.segments && slot.segments.length" class="ml-16 mt-2 space-y-1">
+                        <template x-for="seg in slot.segments" :key="seg.offset">
+                            <div class="text-xs flex gap-2 items-center">
+                                <span class="text-cyan-400">
+                                    <span x-text="slot.time"></span> +<span x-text="seg.offset"></span>m
+                                </span>
+                                <span class="px-2 py-0.5 rounded-full text-black font-semibold"
+                                    :class="categories[seg.category].color" x-text="seg.label">
+                                </span>
+                            </div>
+                        </template>
+                    </div>
+
+                </div>
+
+            </template>
+        </div>
+
+        <!-- SEGMENTS MODAL -->
+        <template x-if="modalOpen">
+            <div @click.self="closeModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+                style="backdrop-filter: blur(4px);">
+
+                <div @click.stop x-show="modalOpen" x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                    class="bg-black border-2 border-cyan-500/40 rounded-2xl p-6 w-full max-w-md glow">
+
+                    <h3 class="text-lg font-bold mb-4 text-cyan-400">
+                        ⊕ Add 15-Minute Segments
+                    </h3>
+
+                    <div class="space-y-2 mb-4">
+                        <template x-for="(seg,i) in modalSegments" :key="i">
+                            <div class="flex gap-2">
+                                <select x-model="seg.category"
+                                    class="bg-black border border-cyan-500/30 text-xs rounded px-2 py-1 text-cyan-100">
+                                    <template x-for="(c,key) in categories" :key="key">
+                                        <option :value="key" x-text="c.label"></option>
+                                    </template>
+                                </select>
+
+                                <input x-model="seg.label" placeholder="Activity"
+                                    class="flex-1 bg-transparent border-b border-cyan-500/30 text-sm focus:outline-none px-2 py-1 text-cyan-100">
+
+                                <button x-show="modalSegments.length > 1" @click="removeSegmentRow(i)" type="button"
+                                    class="text-red-400 hover:text-red-300 text-lg font-black">
+                                    ⊗
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="flex justify-between items-center mt-4 pt-4 border-t border-cyan-500/20">
+                        <button @click="addSegmentRow()" type="button"
+                            class="text-cyan-400 text-sm hover:text-cyan-300 transition">
+                            ⊕ Add segment
+                        </button>
+
+                        <div class="flex gap-2">
+                            <button @click="closeModal()" type="button"
+                                class="bg-black border border-cyan-500/30 text-cyan-400 px-4 py-2 rounded font-bold text-sm hover:bg-cyan-500/10 transition">
+                                Cancel
+                            </button>
+                            <button @click="saveSegments()" type="button"
+                                class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-sm hover:bg-cyan-400 transition">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- RESET CONFIRMATION MODAL -->
+        <template x-if="showResetModal">
+            <div @click.self="showResetModal = false"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+                style="backdrop-filter: blur(6px);">
+
+                <div @click.stop x-show="showResetModal" x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                    class="bg-black border-2 border-red-500/60 rounded-2xl p-6 w-full max-w-md glow custom-alert">
+
+                    <h3 class="text-xl font-bold mb-4 text-red-400">
+                        ⚠ Reset All Data?
+                    </h3>
+
+                    <p class="text-sm text-cyan-100 mb-6 leading-relaxed">
+                        This will permanently delete <b>all schedule data</b> for all days and reset your like status.
+                        This action <b class="text-red-400">cannot be undone</b>.
+                    </p>
+
+                    <div class="flex gap-3 justify-end">
+                        <button @click="showResetModal = false" type="button"
+                            class="bg-black border border-cyan-500/30 text-cyan-400 px-4 py-2 rounded font-bold text-sm hover:bg-cyan-500/10 transition">
+                            Cancel
+                        </button>
+                        <button @click="confirmReset()" type="button"
+                            class="bg-red-500 text-white px-4 py-2 rounded font-bold text-sm hover:bg-red-400 transition">
+                            Reset Everything
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- NON-STICKY FOOTER -->
+        <footer class="bg-black/95 border-t border-cyan-500/30 rounded-t-2xl mt-8">
+            <div class="px-4 py-3">
+                <div class="flex flex-wrap items-center justify-between gap-4 text-xs mb-3">
+
+                    <!-- Version & Links -->
+                    <div class="flex items-center gap-4">
+                        <span class="text-cyan-400/60">v1.1.0</span>
+                        <span class="text-cyan-500/30">|</span>
+                        <a href="/about/" class="text-yellow-400 hover:text-yellow-300 transition underline">
+                            About
+                        </a>
+                        <span class="text-cyan-500/30">|</span>
+                        <button @click="showResetModal = true" type="button"
+                            class="text-red-400 hover:text-red-300 transition underline">
+                            Reset All Data
+                        </button>
+                    </div>
+
+                    <!-- Social Share -->
+                    <div class="flex items-center gap-3">
+                        <span class="text-cyan-500/50 uppercase tracking-widest text-[10px]">Share:</span>
+                        <a href="https://tiktok.com" target="_blank"
+                            class="text-cyan-400 hover:text-cyan-200 transition">TikTok</a>
+                        <a href="https://x.com" target="_blank"
+                            class="text-cyan-400 hover:text-cyan-200 transition">X</a>
+                        <a href="https://instagram.com" target="_blank"
+                            class="text-cyan-400 hover:text-cyan-200 transition">Instagram</a>
+                    </div>
+
+                    <!-- Like Counter -->
+                    <div class="flex items-center gap-3">
+                        <button @click="addLike()" type="button" :disabled="liked"
+                            class="flex items-center gap-2 px-3 py-1 rounded border transition" :class="liked 
+              ? 'border-yellow-400/30 text-yellow-400/50 cursor-not-allowed' 
+              : 'border-yellow-400 text-yellow-400 hover:bg-yellow-400/10 hover:scale-105'">
+                            <span x-text="liked ? '👍' : '👍'"></span>
+                            <span x-text="liked ? 'Liked!' : 'Like'"></span>
+                        </button>
+
+                        <div
+                            class="flex items-center gap-2 px-3 py-1 bg-yellow-400/10 border border-yellow-400/30 rounded">
+                            <span class="text-yellow-400 font-bold" :class="justLiked && 'counter-pulse'"
+                                x-text="totalLikes.toLocaleString()"></span>
+                            <span class="text-yellow-400/60">global likes</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Debug info -->
+                <div class="text-xs text-cyan-400/40 text-center pt-2 border-t border-cyan-500/10">
+                    <span x-text="'Loaded: ' + totalLikes + ' likes'"></span>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <script>
+        // Main App Component - Single unified component
+        function app() {
+            return {
+                // Planner data
+                days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+                day: 'Monday',
+                showInfo: false,
+
+                modalOpen: false,
+                showResetModal: false,
+                activeSlotIndex: null,
+                modalSegments: [],
+
+                categories: {
+                    health: { label: 'Health', color: 'bg-cyan-400' },
+                    work: { label: 'Work', color: 'bg-purple-400' },
+                    growth: { label: 'Growth', color: 'bg-lime-400' },
+                    relations: { label: 'Relationships', color: 'bg-yellow-400' },
+                    admin: { label: 'Life Admin', color: 'bg-blue-400' },
+                    misc: { label: 'Misc/Other', color: 'bg-white' }
+                },
+
+                slots: [],
+
+                // Footer data
+                totalLikes: 0,
+                liked: false,
+                justLiked: false,
+
+                // Init function
+                async init() {
+                    console.log('🚀 App initialized')
+                    this.loadDay(this.day)
+                    await this.loadLikes()
+                    this.checkIfLiked()
+                },
+
+                // Planner methods
+                selectDay(d) {
+                    this.saveDay()
+                    this.day = d
+                    this.loadDay(d)
+                },
+
+                defaultSlots() {
+                    const times = ['09:00AM', '10:00AM', '11:00AM', '12:00PM', '01:00PM', '02:00PM', '03:00PM', '04:00PM', '05:00PM', '06:00PM']
+                    return times.map(t => ({
+                        time: t,
+                        label: '',
+                        category: 'misc',
+                        deleted: false,
+                        segments: []
+                    }))
+                },
+
+                saveDay() {
+                    try {
+                        const data = JSON.stringify(this.slots)
+                        localStorage.setItem('planner-' + this.day, data)
+                        console.log('✓ Saved:', this.day)
+                    } catch (e) {
+                        console.error('✗ Save failed:', e)
+                    }
+                },
+
+                loadDay(d) {
+                    try {
+                        const saved = localStorage.getItem('planner-' + d)
+                        if (saved) {
+                            const parsed = JSON.parse(saved)
+                            this.slots = parsed.map(slot => ({
+                                time: slot.time,
+                                label: slot.label || '',
+                                category: slot.category || 'misc',
+                                deleted: slot.deleted || false,
+                                segments: slot.segments || []
+                            }))
+                            console.log('✓ Loaded:', d, this.slots.length, 'slots')
+                        } else {
+                            this.slots = this.defaultSlots()
+                            console.log('✓ Created default slots for:', d)
+                        }
+                    } catch (e) {
+                        console.error('✗ Load failed:', e)
+                        this.slots = this.defaultSlots()
+                    }
+                },
+
+                toggleDelete(slot) {
+                    slot.deleted = !slot.deleted
+                    this.saveDay()
+                },
+
+                openModal(slotIndex) {
+                    console.log('🔓 Opening modal for slot index:', slotIndex)
+                    this.activeSlotIndex = slotIndex
+                    const slot = this.slots[slotIndex]
+
+                    if (slot.segments && slot.segments.length > 0) {
+                        this.modalSegments = JSON.parse(JSON.stringify(slot.segments))
+                    } else {
+                        this.modalSegments = [{ label: '', category: 'misc', offset: 0 }]
+                    }
+
+                    this.modalOpen = true
+                    console.log('✓ Modal opened with segments:', this.modalSegments)
+                },
+
+                closeModal() {
+                    console.log('🔒 Closing modal')
+                    this.modalOpen = false
+                    this.activeSlotIndex = null
+                },
+
+                addSegmentRow() {
+                    if (this.modalSegments.length < 4) {
+                        const nextOffset = this.modalSegments.length * 15
+                        this.modalSegments.push({
+                            label: '',
+                            category: 'misc',
+                            offset: nextOffset
+                        })
+                        console.log('➕ Added segment row, total:', this.modalSegments.length)
+                    }
+                },
+
+                removeSegmentRow(index) {
+                    this.modalSegments.splice(index, 1)
+                    this.modalSegments = this.modalSegments.map((s, i) => ({
+                        ...s,
+                        offset: i * 15
+                    }))
+                },
+
+                saveSegments() {
+                    if (this.activeSlotIndex === null) return
+
+                    const validSegments = this.modalSegments
+                        .filter(s => s.label && s.label.trim() !== '')
+                        .map((s, i) => ({
+                            offset: i * 15,
+                            label: s.label,
+                            category: s.category
+                        }))
+
+                    this.slots[this.activeSlotIndex].segments = validSegments
+                    console.log('💾 Saved segments:', validSegments)
+
+                    this.closeModal()
+                    this.saveDay()
+                },
+
+                // Reset function
+                confirmReset() {
+                    console.log('🗑️ Resetting all data...')
+
+                    // Clear all day schedules
+                    this.days.forEach(day => {
+                        localStorage.removeItem('planner-' + day)
+                    })
+
+                    // Clear user like status
+                    localStorage.removeItem('yosas-user-liked')
+
+                    // Reset current state
+                    this.slots = this.defaultSlots()
+                    this.liked = false
+                    this.showResetModal = false
+
+                    console.log('✓ All data reset!')
+
+                    // Show success message
+                    alert('✓ All data has been reset successfully!')
+                },
+
+                // Footer/Like methods
+                async loadLikes() {
+                    try {
+                        // Simulating global likes with localStorage since we don't have a backend
+                        const stored = localStorage.getItem('yosas-global-likes')
+                        this.totalLikes = stored ? parseInt(stored) : 1337 // Start with a cool number if empty
+                        console.log('👍 Loaded likes:', this.totalLikes)
+                    } catch (e) {
+                        console.log('👍 Error loading likes:', e)
+                        this.totalLikes = 0
+                    }
+                },
+
+                checkIfLiked() {
+                    this.liked = localStorage.getItem('yosas-user-liked') === 'true'
+                    console.log('👤 User liked status:', this.liked)
+                },
+
+                async addLike() {
+                    if (this.liked) return
+
+                    this.totalLikes++
+                    this.liked = true
+                    this.justLiked = true
+
+                    localStorage.setItem('yosas-user-liked', 'true')
+                    localStorage.setItem('yosas-global-likes', this.totalLikes.toString())
+
+                    console.log('💛 Like saved! Total:', this.totalLikes)
+
+                    setTimeout(() => {
+                        this.justLiked = false
+                    }, 300)
+                }
+            }
+        }
+    </script>
+
+</body>
+
+</html>

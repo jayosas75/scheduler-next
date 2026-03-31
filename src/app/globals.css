@@ -1,0 +1,228 @@
+@import "tailwindcss";
+
+@theme {
+    --font-mono: var(--font-geist-mono);
+    --font-orbitron: var(--font-orbitron);
+}
+
+:root {
+    --background: #000000;
+    --foreground: #cffaf4;
+    /* cyan-100 */
+}
+
+@keyframes vibrant-flow {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+body {
+    /* Vibrant animated background - Brighter Cyberpunk */
+    background: linear-gradient(-45deg, #1e293b, #4c1d95, #0f766e, #312e81);
+    background-size: 400% 400%;
+    animation: vibrant-flow 10s ease infinite;
+    color: var(--foreground);
+    min-height: 100vh;
+}
+
+html {
+    /* Fluid typography scaling from 320px to 1280px viewport */
+    /* Base size: 16px. Minimal 14px, Max 18px */
+    font-size: clamp(14px, 1vw + 10px, 18px);
+    /* Approximate scaling */
+}
+
+/* Utilities from original */
+[x-cloak] {
+    display: none !important;
+}
+
+/* Not needed for React but good for Alpine ports */
+
+.glow {
+    box-shadow: 0 0 20px rgba(0, 255, 255, .25);
+}
+
+.scanlines {
+    background: repeating-linear-gradient(to bottom,
+            rgba(255, 255, 255, 0.02),
+            rgba(255, 255, 255, 0.02) 1px,
+            transparent 1px,
+            transparent 3px);
+}
+
+/* Animated gradient shine effect */
+@keyframes shine {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.title-shine {
+    background: linear-gradient(90deg,
+            #0ff 0%,
+            #f0f 15%,
+            #ff0 30%,
+            #0ff 45%,
+            #0f0 60%,
+            #f0f 75%,
+            #0ff 100%);
+    background-size: 200% auto;
+    animation: shine 3s linear infinite;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
+}
+
+/* Retro counter animation */
+@keyframes pulse-scale {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.counter-pulse {
+    animation: pulse-scale 0.3s ease-in-out;
+}
+
+/* Disabled row styling */
+.row-disabled {
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+}
+
+/* Cyberpunk info icon animation */
+@keyframes glitch {
+
+    0%,
+    100% {
+        transform: translate(0);
+    }
+
+    20% {
+        transform: translate(-2px, 2px);
+    }
+
+    40% {
+        transform: translate(2px, -2px);
+    }
+
+    60% {
+        transform: translate(-2px, -2px);
+    }
+
+    80% {
+        transform: translate(2px, 2px);
+    }
+}
+
+@keyframes neonPulse {
+
+    0%,
+    100% {
+        text-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 15px #0ff;
+    }
+
+    50% {
+        text-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff, 0 0 40px #0ff;
+    }
+}
+
+.cyber-info {
+    animation: neonPulse 2s ease-in-out infinite;
+    cursor: help;
+}
+
+.cyber-info:hover {
+    animation: glitch 0.3s ease-in-out, neonPulse 2s ease-in-out infinite;
+}
+
+/* Custom alert styling */
+.custom-alert {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Retro Cursor */
+a,
+button,
+select,
+input,
+.cursor-pointer {
+    cursor: crosshair !important;
+}
+
+/* Hover effect for interactive elements */
+button:hover,
+a:hover {
+    text-shadow: 0 0 8px currentColor;
+    filter: brightness(1.2);
+}
+
+/* Stars Animation */
+@keyframes star-float {
+    0% {
+        transform: translateY(0);
+    }
+
+    100% {
+        transform: translateY(-1000px);
+    }
+}
+
+.stars-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        radial-gradient(2px 2px at 25px 5px, white, transparent),
+        radial-gradient(2px 2px at 50px 25px, white, transparent),
+        radial-gradient(2px 2px at 125px 20px, white, transparent),
+        radial-gradient(3px 3px at 200px 50px, cyan, transparent),
+        radial-gradient(3px 3px at 100px 150px, white, transparent),
+        radial-gradient(2px 2px at 300px 200px, white, transparent);
+    background-size: 550px 550px;
+    opacity: 0.6;
+    /* Increased opacity */
+    pointer-events: none;
+    z-index: 0;
+    animation: star-float 60s linear infinite;
+    /* Faster animation */
+}

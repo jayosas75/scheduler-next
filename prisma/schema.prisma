@@ -1,0 +1,118 @@
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model DaySchedule {
+  id        Int      @id @default(autoincrement())
+  dayName   String   @unique
+  slots     TimeSlot[]
+}
+
+model TimeSlot {
+  id            Int      @id @default(autoincrement())
+  time          String
+  label         String?
+  category      String   @default("misc")
+  deleted       Boolean  @default(false)
+  dayScheduleId Int
+  daySchedule   DaySchedule @relation(fields: [dayScheduleId], references: [id])
+  segments      Segment[]
+}
+
+model Segment {
+  id         Int      @id @default(autoincrement())
+  offset     Int
+  label      String
+  category   String
+  timeSlotId Int
+  timeSlot   TimeSlot @relation(fields: [timeSlotId], references: [id])
+}
+
+model GlobalState {
+  key   String @id
+  value String
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  password      String?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  events        Event[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+ 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  @@unique([provider, providerAccountId])
+}
+ 
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  start       DateTime
+  end         DateTime
+  allDay      Boolean  @default(false)
+  location    String?
+  category    String   @default("misc")
+  deleted     Boolean  @default(false)
+  
+  // Recurrence fields
+  recurrenceRule  String?   // "daily" | "weekly" | "monthly" | null
+  recurrenceEnd   DateTime? // When recurrence stops (optional)
+  parentEventId   String?   // Link to parent for recurring instances
+  parentEvent     Event?    @relation("RecurringInstances", fields: [parentEventId], references: [id], onDelete: Cascade)
+  recurringEvents Event[]   @relation("RecurringInstances")
+  
+  segments    EventSegment[]
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model EventSegment {
+  id        String @id @default(cuid())
+  offset    Int    // 0, 15, 30, 45
+  label     String
+  category  String
+  eventId   String
+  event     Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
