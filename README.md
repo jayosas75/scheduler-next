@@ -42,11 +42,6 @@ Follow these steps to jack into the matrix:
    ```
    Open [http://localhost:3000](http://localhost:3000) (or the port shown in your terminal) to view the app.
 
-## 🚀 Deployment
-
-We have a dedicated guide for deploying this application. To view the deployment instructions, refer to:
-[Hostinger Deployment Guide](./chats/deployment_hostinger.md)
-
 ## 🗄️ Database Management
 
 To view and edit your database entries directly, run:
