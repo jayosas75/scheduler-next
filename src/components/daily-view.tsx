@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { format, addDays, startOfWeek, eachHourOfInterval, isSameDay } from 'date-fns';
 import { clsx } from 'clsx';
 import type { Event as PrismaEvent } from '@prisma/client';
@@ -9,6 +9,7 @@ import { CATEGORIES, Segment, RecurrenceRule } from '@/types';
 import Legend from './legend';
 import SegmentsModal from './segments-modal';
 import { generateEventTitle, generateBorderGradient, getButtonState, generateICal, generateDaySummary } from '@/lib/calendar';
+import { expandEvents } from '@/lib/recurrence-utils';
 import { Share2 } from 'lucide-react';
 
 interface Event extends Omit<PrismaEvent, 'recurrenceRule' | 'recurrenceEnd'> {
@@ -33,6 +34,11 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
     const [activeRecurrenceRule, setActiveRecurrenceRule] = useState<RecurrenceRule>(null);
     const [activeRecurrenceEnd, setActiveRecurrenceEnd] = useState<Date | null>(null);
 
+    // Drag & Drop state
+    const dragEventIdRef = useRef<string | null>(null);
+    const [dragOverHour, setDragOverHour] = useState<number | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+
     const weekStart = startOfWeek(currentDate);
     const daysArr = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -45,8 +51,9 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
 
     const selectedDate = daysArr[selectedDay];
 
-    // Filter events for selected day (including segments)
-    const dayEvents = events.filter(event =>
+    // Filter events for selected day (including segments and expanded recurring instances)
+    const expandedEvents = expandEvents(events as any, weekStart, addDays(weekStart, 7));
+    const dayEvents = expandedEvents.filter(event =>
         isSameDay(new Date(event.start), selectedDate) && !event.deleted
     );
 
@@ -134,6 +141,10 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
             if (res.ok) {
                 const savedEvent = await res.json();
                 setEvents(prev => [...prev, savedEvent]);
+            } else {
+                const errorData = await res.json().catch(() => ({}));
+                console.error("Failed to save event:", res.status, errorData);
+                alert(`Failed to save event: ${errorData.message || res.statusText}`);
             }
         } catch (error) {
             console.error("Failed to save event:", error);
@@ -144,14 +155,147 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
     };
 
     const handleDeleteEvent = async (id: string) => {
+        const [realId, dateIso] = id.includes('_') ? id.split('_') : [id, null];
+        const dateOnly = dateIso ? dateIso.split('T')[0] : null;
+
+        // Save current state for rollback
+        const previousEvents = [...events];
+
+        // Optimistic UI update
+        if (dateOnly) {
+            // Recurring instance: update parent's description locally
+            setEvents(prev => prev.map(e => {
+                if (e.id === realId) {
+                    const existingDesc = e.description || '';
+                    const newExclusion = existingDesc.includes('EXCLUDE:') 
+                        ? (existingDesc.includes(dateOnly) ? existingDesc : `${existingDesc},${dateOnly}`)
+                        : `${existingDesc} EXCLUDE:${dateOnly}`.trim();
+                    return { ...e, description: newExclusion };
+                }
+                return e;
+            }));
+        } else {
+            // Single event: remove completely
+            setEvents(prev => prev.filter(e => e.id !== id));
+        }
+
         try {
-            const res = await fetch(`/api/events?id=${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                setEvents(events.filter(e => e.id !== id));
+            if (dateOnly) {
+                const parentEvent = previousEvents.find(e => e.id === realId);
+                if (parentEvent) {
+                    let newDesc = parentEvent.description || '';
+                    if (newDesc.includes('EXCLUDE:')) {
+                        if (!newDesc.includes(dateOnly)) {
+                            newDesc = newDesc.replace(/EXCLUDE:([\d\-,]*)/, (m, p1) => `EXCLUDE:${p1 ? p1 + ',' : ''}${dateOnly}`);
+                        }
+                    } else {
+                        newDesc = `${newDesc} EXCLUDE:${dateOnly}`.trim();
+                    }
+
+                    const res = await fetch(`/api/events`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: realId, description: newDesc }),
+                    });
+
+                    if (!res.ok) throw new Error("API Failure");
+                }
+            } else {
+                const res = await fetch(`/api/events?id=${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error("API Failure");
             }
         } catch (error) {
-            console.error("Failed to delete event:", error);
+            console.error("Delete Error:", error);
+            setEvents(previousEvents); // Rollback
+            alert("Matrix glitch: Failed to delete. Reverting...");
         }
+    };
+
+    // --- Drag & Drop Handlers ---
+
+    const handleDragStart = (e: React.DragEvent, eventId: string) => {
+        dragEventIdRef.current = eventId;
+        setIsDragging(true);
+        e.dataTransfer.effectAllowed = 'move';
+        // Store ID as text for cross-component compat
+        e.dataTransfer.setData('text/plain', eventId);
+    };
+
+    const handleDragEnd = () => {
+        setIsDragging(false);
+        setDragOverHour(null);
+        dragEventIdRef.current = null;
+    };
+
+    const handleDragOver = (e: React.DragEvent, hourNum: number) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        setDragOverHour(hourNum);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        // Only clear if leaving the row entirely (not entering a child)
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            setDragOverHour(null);
+        }
+    };
+
+    const handleDrop = async (e: React.DragEvent, targetHour: Date) => {
+        e.preventDefault();
+        setDragOverHour(null);
+        setIsDragging(false);
+
+        const eventId = dragEventIdRef.current;
+        if (!eventId) return;
+
+        const event = events.find(ev => ev.id === eventId);
+        if (!event) return;
+
+        const oldStart = new Date(event.start);
+        const oldEnd = new Date(event.end);
+
+        // Don't do anything if dropped on the same hour
+        if (oldStart.getHours() === targetHour.getHours() && isSameDay(oldStart, selectedDate)) return;
+
+        // Build new start/end preserving duration
+        const duration = oldEnd.getTime() - oldStart.getTime();
+        const newStart = new Date(selectedDate);
+        newStart.setHours(targetHour.getHours(), 0, 0, 0);
+        const newEnd = new Date(newStart.getTime() + duration);
+
+        // Optimistic UI update
+        const previousEvents = [...events];
+        setEvents(prev =>
+            prev.map(ev =>
+                ev.id === eventId
+                    ? { ...ev, start: newStart.toISOString(), end: newEnd.toISOString() }
+                    : ev
+            )
+        );
+
+        try {
+            const res = await fetch('/api/events', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: eventId,
+                    start: newStart.toISOString(),
+                    end: newEnd.toISOString(),
+                }),
+            });
+
+            if (!res.ok) {
+                // Rollback on failure
+                setEvents(previousEvents);
+                console.error('Failed to reschedule event');
+            }
+        } catch (err) {
+            // Rollback on network error
+            setEvents(previousEvents);
+            console.error('Network error rescheduling event:', err);
+        }
+
+        dragEventIdRef.current = null;
     };
 
     const exportToICal = () => {
@@ -269,7 +413,18 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                     const shadowColor = hourEvents.length > 0 ? (catConfig.hex) : 'rgba(34,211,238,0.5)';
 
                     return (
-                        <div key={hour.toISOString()} className="group border-b border-cyan-500/10 hover:bg-cyan-500/5 transition-all">
+                        <div
+                            key={hour.toISOString()}
+                            className={clsx(
+                                'group border-b border-cyan-500/10 transition-all duration-200',
+                                dragOverHour === hourNum && isDragging
+                                    ? 'bg-cyan-500/15 ring-1 ring-cyan-400/60 ring-inset shadow-[inset_0_0_12px_rgba(0,255,255,0.15)]'
+                                    : 'hover:bg-cyan-500/5'
+                            )}
+                            onDragOver={(e) => handleDragOver(e, hourNum)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => handleDrop(e, hour)}
+                        >
                             <div className="flex px-4 py-4 gap-4 items-start">
                                 <div className={clsx(
                                     "w-20 text-sm font-black tracking-tighter pt-1 whitespace-nowrap font-orbitron transition-colors duration-300",
@@ -316,7 +471,20 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                                             }
 
                                             return (
-                                                <div key={event.id} className="relative animate-in slide-in-from-left-2 duration-300">
+                                                <div
+                                                    key={event.id}
+                                                    className={clsx(
+                                                        'relative animate-in slide-in-from-left-2 duration-300',
+                                                        'cursor-grab active:cursor-grabbing',
+                                                        dragEventIdRef.current === event.id
+                                                            ? 'opacity-40 scale-95'
+                                                            : 'opacity-100'
+                                                    )}
+                                                    draggable
+                                                    onDragStart={(e) => handleDragStart(e, event.id)}
+                                                    onDragEnd={handleDragEnd}
+                                                    title="Drag to reschedule"
+                                                >
                                                     <div className="rounded-r-lg p-3 bg-black/40 border border-cyan-500/30 relative overflow-hidden">
                                                         {/* Gradient Border Strip */}
                                                         <div
@@ -342,7 +510,9 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                                                                         hasSegments
                                                                             ? event.segments!
                                                                             : [{ label: event.title, category: event.category || 'misc', offset: 0 }],
-                                                                        event.id
+                                                                        event.id,
+                                                                        event.recurrenceRule as RecurrenceRule,
+                                                                        event.recurrenceEnd ? new Date(event.recurrenceEnd) : null
                                                                     )}
                                                                     className="text-cyan-400/50 hover:text-cyan-400 transition-colors"
                                                                     title="Edit Subroutine"

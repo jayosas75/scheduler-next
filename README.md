@@ -86,7 +86,7 @@ Synced by the Chronos... the end is not here!
 
 ## 📅 Roadmap / TODO
 
-- [ ] **Drag & Drop**: Implement intuitive event rescheduling by dragging.
+- [x] **Drag & Drop**: Implement intuitive event rescheduling by dragging.
 - [x] **Recurring Events**: Add support for daily/weekly/monthly routines.
 - [x] **Data Export**: Export schedule to iCal or PDF format (iCal implemented).
 - [ ] **Social Sharing**: Generate "Day at a Glance" images for social media.
@@ -98,4 +98,24 @@ Synced by the Chronos... the end is not here!
 Run our custom color-scheme and design system validation:
 ```bash
 node __tests__/color-scheme.test.js
+```
+
+Run responsive layout and functional logic tests:
+```bash
+node __tests__/functional.test.js
+```
+
+Run drag & drop reschedule logic tests:
+```bash
+node __tests__/drag-drop.test.js
+```
+
+Run recurrence UI tests:
+```bash
+node __tests__/recurrence-ui.test.js
+```
+
+Run user creation logic tests:
+```bash
+node __tests__/user-creation.test.js
 ```

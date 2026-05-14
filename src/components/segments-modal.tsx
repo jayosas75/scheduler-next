@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CircleX, CirclePlus, Repeat } from 'lucide-react';
+import { CircleX, CirclePlus, CircleMinus, Repeat } from 'lucide-react';
+import { clsx } from 'clsx';
 import { CATEGORIES, Segment, RecurrenceRule } from '@/types';
 
 interface SegmentsModalProps {
@@ -271,10 +272,23 @@ export default function SegmentsModal({ isOpen, onClose, onSave, initialSegments
                     <button
                         onClick={addSegmentRow}
                         disabled={totalDuration >= 60 || segments.length >= 4}
-                        className="text-cyan-400 hover:text-cyan-300 transition-colors font-black uppercase tracking-widest disabled:opacity-30 flex items-center gap-2 text-sm group"
+                        className={clsx(
+                            "transition-all duration-300 font-black uppercase tracking-widest flex items-center gap-2 text-sm group",
+                            totalDuration >= 60 
+                                ? "text-red-500 cursor-not-allowed opacity-80" 
+                                : "text-cyan-400 hover:text-cyan-300"
+                        )}
+                        title={totalDuration >= 60 
+                            ? "🚨 TEMPORAL CAPACITY REACHED! No more chronos can be squeezed into this slot, Captain!" 
+                            : "Add Segment"
+                        }
                     >
-                        <CirclePlus size={24} className="group-hover:scale-110 transition-transform" />
-                        <span>Add Segment</span>
+                        {totalDuration >= 60 ? (
+                            <CircleMinus size={24} className="text-red-500 animate-pulse" />
+                        ) : (
+                            <CirclePlus size={24} className="group-hover:scale-110 transition-transform" />
+                        )}
+                        <span>{totalDuration >= 60 ? "Hour Saturated" : "Add Segment"}</span>
                     </button>
 
                     <div className="flex gap-2">

@@ -21,6 +21,13 @@ const eventSchema = z.object({
     })).optional(),
 });
 
+const patchSchema = z.object({
+    id: z.string().min(1),
+    start: z.string().datetime().optional(),
+    end: z.string().datetime().optional(),
+    description: z.string().optional(),
+});
+
 export async function POST(req: Request) {
     try {
         const session = await auth();
@@ -141,6 +148,60 @@ export async function DELETE(req: Request) {
         console.error("Delete Event Error:", error);
         return NextResponse.json(
             { message: "Failed to delete event" },
+            { status: 500 }
+        );
+    }
+}
+
+export async function PATCH(req: Request) {
+    try {
+        const session = await auth();
+        if (!session?.user?.email) {
+            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { email: session.user.email },
+            select: { id: true },
+        });
+
+        if (!user) {
+            return NextResponse.json({ message: "User not found" }, { status: 404 });
+        }
+
+        const body = await req.json();
+        const data = patchSchema.parse(body);
+
+        // Verify the event belongs to this user before updating
+        const existing = await prisma.event.findFirst({
+            where: { id: data.id, userId: user.id },
+        });
+
+        if (!existing) {
+            return NextResponse.json({ message: "Event not found" }, { status: 404 });
+        }
+
+        const updated = await prisma.event.update({
+            where: { id: data.id },
+            data: {
+                ...(data.start && { start: new Date(data.start) }),
+                ...(data.end && { end: new Date(data.end) }),
+                ...(data.description !== undefined && { description: data.description }),
+            },
+            include: { segments: true },
+        });
+
+        return NextResponse.json(updated);
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return NextResponse.json(
+                { message: "Invalid input", errors: error.issues },
+                { status: 400 }
+            );
+        }
+        console.error("Patch Event Error:", error);
+        return NextResponse.json(
+            { message: "Failed to update event" },
             { status: 500 }
         );
     }

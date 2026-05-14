@@ -43,29 +43,38 @@ export function expandRecurringEvent(
     rangeStart: Date,
     rangeEnd: Date
 ): RecurringEvent[] {
+    const eventStart = new Date(event.start);
+    const eventEnd = new Date(event.end);
+
     // If no recurrence rule, return the original event if it's in range
     if (!event.recurrenceRule) {
-        const eventStart = new Date(event.start);
-        if (isBefore(eventStart, rangeEnd) && isAfter(eventStart, rangeStart)) {
+        if (isBefore(eventStart, rangeEnd) && !isBefore(eventStart, rangeStart)) {
             return [event];
         }
         return [];
     }
 
+    // Parse exclusions from description (Format: EXCLUDE:2024-01-01,2024-01-02)
+    const excludedDates: string[] = [];
+    if (event.description && event.description.includes('EXCLUDE:')) {
+        const match = event.description.match(/EXCLUDE:([\d\-,]*)/);
+        if (match && match[1]) {
+            excludedDates.push(...match[1].split(','));
+        }
+    }
+
     const instances: RecurringEvent[] = [];
-    const originalStart = new Date(event.start);
-    const originalEnd = new Date(event.end);
-    const duration = originalEnd.getTime() - originalStart.getTime();
+    const duration = eventEnd.getTime() - eventStart.getTime();
 
     const recurrenceEndDate = event.recurrenceEnd
         ? new Date(event.recurrenceEnd)
-        : addMonths(rangeEnd, 12); // Default: expand up to 1 year ahead if no end date
+        : addMonths(rangeEnd, 12);
 
-    let currentStart = startOfDay(originalStart);
+    let currentStart = new Date(eventStart);
 
-    // Iterate through occurrences within the range
+    // Iterate through occurrences
     let iterationCount = 0;
-    const MAX_ITERATIONS = 1000; // Safety limit
+    const MAX_ITERATIONS = 1000;
 
     while (
         isBefore(currentStart, rangeEnd) &&
@@ -74,14 +83,16 @@ export function expandRecurringEvent(
     ) {
         iterationCount++;
 
-        // If this occurrence is within the requested range, add it
-        if (!isBefore(currentStart, rangeStart)) {
+        const dateStr = currentStart.toISOString().split('T')[0];
+
+        // If this occurrence is within or after rangeStart AND not excluded, add it
+        if (!isBefore(currentStart, rangeStart) && !excludedDates.includes(dateStr)) {
             const instanceEnd = new Date(currentStart.getTime() + duration);
 
             instances.push({
                 ...event,
-                id: `${event.id}_${currentStart.toISOString()}`, // Virtual ID
-                start: currentStart,
+                id: `${event.id}_${currentStart.toISOString()}`,
+                start: new Date(currentStart),
                 end: instanceEnd,
             });
         }

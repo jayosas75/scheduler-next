@@ -1,6 +1,6 @@
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -95,6 +95,7 @@ model Event {
   // Recurrence fields
   recurrenceRule  String?   // "daily" | "weekly" | "monthly" | null
   recurrenceEnd   DateTime? // When recurrence stops (optional)
+  excludedDates   String?   // JSON stringified array of ISO date strings to skip
   parentEventId   String?   // Link to parent for recurring instances
   parentEvent     Event?    @relation("RecurringInstances", fields: [parentEventId], references: [id], onDelete: Cascade)
   recurringEvents Event[]   @relation("RecurringInstances")
