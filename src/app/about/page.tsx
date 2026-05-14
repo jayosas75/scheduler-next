@@ -19,7 +19,7 @@ export default function AboutPage() {
                         SCHEDULER // 2026
                     </h1>
                     <p className="text-cyan-400 font-mono text-sm tracking-[0.3em] uppercase">
-                        Protocol v1.1.0 // Status: Operational
+                        Protocol v1.2.0 // Status: Operational
                     </p>
                     <div className="h-1 w-32 bg-cyan-500 mx-auto mt-6 glow" />
                 </div>

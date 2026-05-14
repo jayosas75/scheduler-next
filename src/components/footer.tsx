@@ -47,7 +47,7 @@ export default function Footer() {
 
                     {/* Version & Links */}
                     <div className="flex items-center gap-4 text-cyan-400">
-                        <span className="opacity-60">v1.1.0</span>
+                        <span className="opacity-60">v1.2.0</span>
                         <span className="opacity-30">|</span>
                         <Link href="/about" className="text-yellow-400 hover:text-yellow-300 transition underline">
                             About
