@@ -11,6 +11,7 @@ export interface RecurringEvent {
     allDay: boolean;
     location?: string | null;
     category: string;
+    deleted: boolean;
     recurrenceRule?: RecurrenceRule;
     recurrenceEnd?: Date | string | null;
     segments?: any[];
