@@ -12,7 +12,9 @@ import { generateEventTitle, generateBorderGradient, getButtonState, generateICa
 import { expandEvents } from '@/lib/recurrence-utils';
 import { Share2 } from 'lucide-react';
 
-interface Event extends Omit<PrismaEvent, 'recurrenceRule' | 'recurrenceEnd'> {
+interface Event extends Omit<PrismaEvent, 'recurrenceRule' | 'recurrenceEnd' | 'start' | 'end'> {
+    start: Date | string;
+    end: Date | string;
     segments?: Segment[];
     recurrenceRule?: string | null;
     recurrenceEnd?: Date | string | null;
