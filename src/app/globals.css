@@ -226,3 +226,38 @@ a:hover {
     animation: star-float 60s linear infinite;
     /* Faster animation */
 }
+
+/* Animated Cyber Grid for Login Page */
+.cyber-grid-wrapper {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.cyber-grid-wrapper::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 10%, #000 80%);
+}
+
+.cyber-grid {
+    position: absolute;
+    width: 200vw;
+    height: 200vh;
+    left: -50vw;
+    top: 0;
+    background-image: 
+        linear-gradient(rgba(217, 70, 239, 0.4) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.4) 1px, transparent 1px);
+    background-size: 60px 60px;
+    transform: perspective(600px) rotateX(60deg) translateY(-100px);
+    animation: grid-scroll 3s linear infinite;
+}
+
+@keyframes grid-scroll {
+    0% { transform: perspective(600px) rotateX(60deg) translateY(0); }
+    100% { transform: perspective(600px) rotateX(60deg) translateY(60px); }
+}
