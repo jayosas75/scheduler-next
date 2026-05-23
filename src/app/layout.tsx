@@ -1,5 +1,6 @@
 
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Geist, Geist_Mono, Orbitron } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
@@ -25,15 +26,17 @@ export const metadata: Metadata = {
   description: "Full-featured calendar with authentication and import",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `try{var t=localStorage.getItem('scheduler-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}`,
           }}
