@@ -6,7 +6,7 @@ A high-performance, mobile-first, cyberpunk-themed calendar application. Built f
 
 - **Framework**: [Next.js 15+](https://nextjs.org/) (App Router)
 - **Styling**: [Tailwind CSS 4](https://tailwindcss.com/) with custom Cyberpunk design system
-- **Database**: [Prisma](https://www.prisma.io/) with SQLite
+- **Database**: [Prisma](https://www.prisma.io/) with SQLite (local dev) and PostgreSQL/Supabase (production)
 - **Authentication**: [NextAuth.js v5 Beta](https://authjs.dev/) (Credentials Provider)
 - **Validation**: [Zod](https://zod.dev/)
 - **Security**: [bcryptjs](https://github.com/dcodeIO/bcrypt.js)
@@ -49,6 +49,25 @@ To view and edit your database entries directly, run:
 npx prisma studio
 ```
 This will open a local interface at [http://localhost:5555](http://localhost:5555).
+
+## 🌐 Production Deployment (Supabase & Vercel)
+
+To deploy the scheduler to a live production environment on Vercel with a Supabase PostgreSQL database:
+
+1. **Prisma Configuration**
+   The production database provider is set to PostgreSQL. Verify that [schema.prisma](file:///c:/Users/jayos/Documents/Projects/scheduler-next/prisma/schema.prisma) uses `provider = "postgresql"`.
+
+2. **Configure Vercel Environment Variables**
+   Add the following environment variables in your Vercel project Settings:
+   - `AUTH_SECRET`: A long secure secret key used by NextAuth to sign tokens (e.g. `super-secret-random-key-change-me`).
+   - `DATABASE_URL`: Your Supabase **Transaction Pooler** connection string (port `6543`), ending with `?pgbouncer=true`.
+   - `DIRECT_URL`: Your Supabase **Direct Connection** string (port `5432`).
+
+3. **Deploy & Push Database Schema**
+   To create the tables in your production Supabase database, run the following command from the root of the project:
+   ```bash
+   npx prisma db push
+   ```
 
 ---
 
