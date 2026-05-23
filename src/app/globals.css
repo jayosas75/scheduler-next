@@ -87,6 +87,19 @@
     --accent-rgb: 255, 94, 26;
 }
 
+/* Glow White */
+:root[data-theme="white"] {
+    --color-cyan-50: #ffffff;
+    --color-cyan-100: #f5f5f5;
+    --color-cyan-200: #e5e5e5;
+    --color-cyan-300: #d4d4d4;
+    --color-cyan-400: #ffffff;
+    --color-cyan-500: #d4d4d4;
+    --foreground: #f5f5f5;
+    --accent: #ffffff;
+    --accent-rgb: 255, 255, 255;
+}
+
 @keyframes vibrant-flow {
     0% {
         background-position: 0% 50%;
@@ -606,7 +619,7 @@ a:hover {
    remounted via a React key, replaying this mount animation). */
 .flip-clock {
     display: flex;
-    align-items: center;
+    align-items: stretch; /* all cards share the tallest card's height */
     justify-content: center;
     gap: 0.4rem;
     perspective: 500px;
@@ -617,6 +630,7 @@ a:hover {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center; /* center content when stretched to match heights */
     min-width: 3.1rem;
     padding: 0.25rem 0.55rem 0.3rem;
     border-radius: 0.4rem;
@@ -672,20 +686,35 @@ a:hover {
 }
 
 .flip-sep {
+    align-self: center; /* keep the dash centered while cards stretch */
     color: rgba(255, 255, 255, 0.65);
     font-weight: 700;
     font-size: 1rem;
 }
 
-.flip-year {
-    align-self: flex-end;
-    margin-left: 0.15rem;
-    padding-bottom: 0.2rem;
-    font-family: var(--font-mono), monospace;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    color: rgba(255, 255, 255, 0.7);
+/* Year card: "20" over "26", matching the date cards' proportions */
+.flip-card-year-top {
+    width: 100%;
+    text-align: center;
+    font-family: var(--font-orbitron), sans-serif;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.82);
+    line-height: 1;
+    padding-bottom: 3px;
+    margin-bottom: 3px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.85);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.flip-card-year-bottom {
+    font-family: var(--font-orbitron), sans-serif;
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.05;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
 }
 
 @keyframes flip-in {

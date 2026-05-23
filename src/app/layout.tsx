@@ -38,7 +38,10 @@ export default async function RootLayout({
         <script
           nonce={nonce}
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem('scheduler-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}`,
+            // Apply the saved accent before paint (no flash). 'auto' resolves
+            // to the current weekday's color — this list MUST match
+            // DAY_THEME_IDS in theme-switcher.tsx.
+            __html: `try{var t=localStorage.getItem('scheduler-theme');if(t==='auto'){t=['cyan','matrix','tokyo','yellow','synth','orange','white'][new Date().getDay()];}if(t)document.documentElement.dataset.theme=t;}catch(e){}`,
           }}
         />
       </head>

@@ -420,11 +420,23 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
         });
     };
 
+    // One designated color per weekday (Sun → Sat). Aligned to the six neon
+    // theme accents plus a glowing white, for seven distinct day colors.
     const dayColors = [
-        { activeBg: 'bg-cyan-500', activeText: 'text-black', activeBorder: 'border-cyan-400', shadow: 'shadow-[0_0_15px_rgba(34,211,238,0.4)]', inactiveText: 'text-cyan-400', inactiveBorder: 'border-cyan-500/30', hoverBg: 'hover:bg-cyan-500/10' },
-        { activeBg: 'bg-fuchsia-500', activeText: 'text-black', activeBorder: 'border-fuchsia-400', shadow: 'shadow-[0_0_15px_rgba(217,70,239,0.4)]', inactiveText: 'text-fuchsia-400', inactiveBorder: 'border-fuchsia-500/30', hoverBg: 'hover:bg-fuchsia-500/10' },
-        { activeBg: 'bg-yellow-500', activeText: 'text-black', activeBorder: 'border-yellow-400', shadow: 'shadow-[0_0_15px_rgba(234,179,8,0.4)]', inactiveText: 'text-yellow-400', inactiveBorder: 'border-yellow-500/30', hoverBg: 'hover:bg-yellow-500/10' },
-        { activeBg: 'bg-[#39ff14]', activeText: 'text-black', activeBorder: 'border-[#39ff14]', shadow: 'shadow-[0_0_15px_rgba(57,255,20,0.4)]', inactiveText: 'text-[#39ff14]', inactiveBorder: 'border-[#39ff14]/30', hoverBg: 'hover:bg-[#39ff14]/10' },
+        // Sun — Cyber Cyan
+        { activeBg: 'bg-[#00ffff]', activeText: 'text-black', activeBorder: 'border-[#00ffff]', shadow: 'shadow-[0_0_15px_rgba(0,255,255,0.45)]', inactiveText: 'text-[#00ffff]', inactiveBorder: 'border-[#00ffff]/30', hoverBg: 'hover:bg-[#00ffff]/10' },
+        // Mon — Matrix Green
+        { activeBg: 'bg-[#00ff9c]', activeText: 'text-black', activeBorder: 'border-[#00ff9c]', shadow: 'shadow-[0_0_15px_rgba(0,255,156,0.45)]', inactiveText: 'text-[#00ff9c]', inactiveBorder: 'border-[#00ff9c]/30', hoverBg: 'hover:bg-[#00ff9c]/10' },
+        // Tue — Tokyo Pink
+        { activeBg: 'bg-[#ff2e88]', activeText: 'text-black', activeBorder: 'border-[#ff2e88]', shadow: 'shadow-[0_0_15px_rgba(255,46,136,0.45)]', inactiveText: 'text-[#ff2e88]', inactiveBorder: 'border-[#ff2e88]/30', hoverBg: 'hover:bg-[#ff2e88]/10' },
+        // Wed — Cyberpunk Yellow
+        { activeBg: 'bg-[#fcee0a]', activeText: 'text-black', activeBorder: 'border-[#fcee0a]', shadow: 'shadow-[0_0_15px_rgba(252,238,10,0.45)]', inactiveText: 'text-[#fcee0a]', inactiveBorder: 'border-[#fcee0a]/30', hoverBg: 'hover:bg-[#fcee0a]/10' },
+        // Thu — Synth Purple
+        { activeBg: 'bg-[#b026ff]', activeText: 'text-white', activeBorder: 'border-[#b026ff]', shadow: 'shadow-[0_0_15px_rgba(176,38,255,0.45)]', inactiveText: 'text-[#b026ff]', inactiveBorder: 'border-[#b026ff]/30', hoverBg: 'hover:bg-[#b026ff]/10' },
+        // Fri — Blood Orange
+        { activeBg: 'bg-[#ff5e1a]', activeText: 'text-black', activeBorder: 'border-[#ff5e1a]', shadow: 'shadow-[0_0_15px_rgba(255,94,26,0.45)]', inactiveText: 'text-[#ff5e1a]', inactiveBorder: 'border-[#ff5e1a]/30', hoverBg: 'hover:bg-[#ff5e1a]/10' },
+        // Sat — Glow White
+        { activeBg: 'bg-white', activeText: 'text-black', activeBorder: 'border-white', shadow: 'shadow-[0_0_18px_rgba(255,255,255,0.6)]', inactiveText: 'text-white', inactiveBorder: 'border-white/40', hoverBg: 'hover:bg-white/10' },
     ];
 
     const getColor = (idx: number) => dayColors[idx % dayColors.length];
@@ -436,36 +448,46 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
 
             {/* Week Navigation */}
             <div className={clsx(
-                "flex items-center justify-between mb-4 border bg-black/80 rounded-2xl p-4 glow transition-colors duration-500",
+                "grid grid-cols-[1fr_auto_1fr] items-center mb-4 border bg-black/80 rounded-2xl p-4 glow transition-colors duration-500",
                 getColor(selectedDay).inactiveBorder
             )}>
-                <button onClick={goToToday} className={clsx("p-2 transition-colors", getColor(selectedDay).inactiveText, getColor(selectedDay).hoverBg.replace('bg-', 'text-'))} title="Jump to Today">
-                    <CalendarDays className="w-6 h-6 border rounded-lg border-current" />
-                </button>
-                <button onClick={goToPreviousWeek} className={clsx("p-2 transition-colors", getColor(selectedDay).inactiveText, getColor(selectedDay).hoverBg.replace('bg-', 'text-'))}>
-                    <ChevronLeft className="w-6 h-6 border rounded-lg border-current" />
-                </button>
-                <div className="text-center">
+                {/* Left controls */}
+                <div className="flex items-center gap-1 justify-self-start">
+                    <button onClick={goToToday} className={clsx("p-2 transition-colors", getColor(selectedDay).inactiveText, getColor(selectedDay).hoverBg.replace('bg-', 'text-'))} title="Jump to Today">
+                        <CalendarDays className="w-6 h-6 border rounded-lg border-current" />
+                    </button>
+                    <button onClick={goToPreviousWeek} className={clsx("p-2 transition-colors", getColor(selectedDay).inactiveText, getColor(selectedDay).hoverBg.replace('bg-', 'text-'))} title="Previous week">
+                        <ChevronLeft className="w-6 h-6 border rounded-lg border-current" />
+                    </button>
+                </div>
+
+                {/* Centered Temporal Range + flip clock */}
+                <div className="text-center px-4">
                     <h2 className="text-sm font-black uppercase tracking-[0.3em] text-white mb-2">Temporal Range</h2>
                     <FlipDate start={weekStart} end={addDays(weekStart, 6)} />
                 </div>
-                <button onClick={goToNextWeek} className={clsx("p-2 transition-colors", getColor(selectedDay).inactiveText, getColor(selectedDay).hoverBg.replace('bg-', 'text-'))}>
-                    <ChevronRight className="w-6 h-6 border rounded-lg border-current" />
-                </button>
-                <button
-                    onClick={exportToICal}
-                    className="p-2 text-yellow-400 hover:text-yellow-300 transition-colors ml-2"
-                    title="Export All to iCal"
-                >
-                    <Download className="w-6 h-6 border border-yellow-500/20 rounded-lg hover:bg-yellow-500/10" />
-                </button>
-                <button
-                    onClick={handleShare}
-                    className="p-2 text-cyan-400 hover:text-cyan-300 transition-colors ml-2"
-                    title="Share Day Summary"
-                >
-                    <Share2 className="w-6 h-6 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/10" />
-                </button>
+
+                {/* Right controls */}
+                <div className="flex items-center gap-2 justify-self-end">
+                    <button onClick={goToNextWeek} className={clsx("p-2 transition-colors", getColor(selectedDay).inactiveText, getColor(selectedDay).hoverBg.replace('bg-', 'text-'))} title="Next week">
+                        <ChevronRight className="w-6 h-6 border rounded-lg border-current" />
+                    </button>
+                    <button
+                        onClick={exportToICal}
+                        className="flex items-center gap-1.5 rounded-lg border border-yellow-500/30 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wider text-yellow-400 transition-colors hover:bg-yellow-500/10 hover:text-yellow-300"
+                        title="Download an iCal (.ics) file of your full schedule — import it into Google or Apple Calendar"
+                    >
+                        <Download className="w-4 h-4" />
+                        Export
+                    </button>
+                    <button
+                        onClick={handleShare}
+                        className="p-2 text-cyan-400 hover:text-cyan-300 transition-colors"
+                        title="Share Day Summary"
+                    >
+                        <Share2 className="w-6 h-6 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/10" />
+                    </button>
+                </div>
             </div>
 
             {/* Day Tabs */}
@@ -570,7 +592,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
 
                             <div className="flex px-4 py-4 gap-4 items-start relative z-[3]">
                                 <div className={clsx(
-                                    "w-20 text-sm font-black tracking-tighter pt-1 whitespace-nowrap font-orbitron transition-colors duration-300",
+                                    "w-20 text-sm font-bold tracking-tight pt-1 whitespace-nowrap font-mono transition-colors duration-300",
                                     timeColorClass,
                                     viewingToday && hourNum === currentHour && 'time-label-active'
                                 )}

@@ -20,7 +20,7 @@ const STICKERS = [
     { label: '⚡ DRAG & DROP', top: '18%', left: '8%', tilt: '-8deg', drift: '7s', delay: '0s', depth: 2 },
     { label: '🎤 VOICE READY', top: '26%', left: '78%', tilt: '7deg', drift: '8.5s', delay: '0.6s', depth: 3 },
     { label: '♻ RECURRING', top: '64%', left: '12%', tilt: '6deg', drift: '6.5s', delay: '1.1s', depth: 1.5 },
-    { label: '🎨 6 NEON THEMES', top: '70%', left: '74%', tilt: '-6deg', drift: '9s', delay: '0.3s', depth: 2.5 },
+    { label: '🎨 7 NEON THEMES', top: '70%', left: '74%', tilt: '-6deg', drift: '9s', delay: '0.3s', depth: 2.5 },
 ];
 
 const FEATURES = [

@@ -118,6 +118,7 @@ Ordered by **risk vs. priority** — safe, high-impact quick wins first; larger 
 ### 🔵 Tier 3 — Larger Features (higher effort/risk, schedule deliberately)
 
 - [ ] **Monthly View**: Add a month-grid (31-day) calendar view alongside the existing week/daily view. Triggered by the **"31 Days"** toggle already placed in the legend bar ([legend.tsx](src/components/legend.tsx)), which is currently a no-op placeholder.
+- [ ] **Export Format Overhaul**: Harden the iCal (`.ics`) generation in [calendar.ts](src/lib/calendar.ts) (`generateICal`) so exports import seamlessly into **Apple Calendar (Mac/iOS)** and **Google Calendar (Android)** — spec-correct `VCALENDAR`/`VEVENT` structure, timezone handling (`VTIMEZONE`/`TZID` instead of naive local times), stable `UID` + `DTSTAMP`, 75-octet line folding, and full recurrence (`RRULE`) fidelity. Test round-trips on real Mac and Android calendar apps.
 - [ ] **Social Sharing**: Generate "Day at a Glance" images for social media (pairs with the share-links fix in Tier 1).
 - [ ] **AI Netrunner Assistant**: A natural-language command bar to create, shift, or optimize schedules from text requests.
 - [ ] **Offline Mode**: Full PWA support for offline scheduling.
