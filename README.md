@@ -118,14 +118,14 @@ Ordered by **risk vs. priority** — safe, high-impact quick wins first; larger 
 ### 🔵 Tier 3 — Larger Features (higher effort/risk, schedule deliberately)
 
 - [ ] **Monthly View**: Add a month-grid (31-day) calendar view alongside the existing week/daily view. Triggered by the **"31 Days"** toggle already placed in the legend bar ([legend.tsx](src/components/legend.tsx)), which is currently a no-op placeholder.
-- [ ] **UI Sound Effects**: Soft retro-cyberpunk sci-fi sounds for clicks, slide-ins, and drag-and-drops, with an easily accessible global mute button.
 - [ ] **Social Sharing**: Generate "Day at a Glance" images for social media (pairs with the share-links fix in Tier 1).
 - [ ] **AI Netrunner Assistant**: A natural-language command bar to create, shift, or optimize schedules from text requests.
 - [ ] **Offline Mode**: Full PWA support for offline scheduling.
 
 ### ✅ Completed
 
-- [x] **Advanced Security & Anti-Abuse**: Best-effort in-memory rate limiting ([rate-limit.ts](src/lib/rate-limit.ts)) on account creation (`POST /api/auth/register`) and the credentials login callback; input sanitization of event title/description/location/segment labels and the register name ([sanitize.ts](src/lib/sanitize.ts)), plus RFC-5545 escaping of iCal export fields; and a production Content Security Policy with hardening headers ([next.config.ts](next.config.ts), CSP relaxed in dev for HMR, theme script allowed via sha256 hash).
+- [x] **UI Sound Effects**: Retro-cyberpunk sounds synthesized at runtime via the Web Audio API ([sound.ts](src/lib/sound.ts)) — no asset files, offline-friendly, CSP-safe. Covers clicks, modal slide-ins, drag pickup/drop, save/delete/error, with an easily accessible global mute button ([sound-toggle.tsx](src/components/sound-toggle.tsx)) in the header, persisted to `localStorage`.
+- [x] **Advanced Security & Anti-Abuse**: Best-effort in-memory rate limiting ([rate-limit.ts](src/lib/rate-limit.ts)) on account creation (`POST /api/auth/register`) and the credentials login callback; input sanitization of event title/description/location/segment labels and the register name ([sanitize.ts](src/lib/sanitize.ts)), plus RFC-5545 escaping of iCal export fields; and a production Content Security Policy with hardening headers ([next.config.ts](next.config.ts), CSP relaxed in dev for HMR, per-request nonce generated in [middleware.ts](src/middleware.ts) so the App Router's inline RSC scripts are trusted).
 - [x] **Fix Week Navigation Data Loading**: `DailyView` now fetches the full event set on mount (`GET /api/events`) instead of only the server-seeded current week, so one-off events in any week appear when navigating ◄ / ► and **"Export All to iCal"** now covers every week.
 - [x] **Retro Unique Visitor Counter**: Vintage 60s space-age odometer in the footer ([visitor-counter.tsx](src/components/visitor-counter.tsx)), backed by `/api/visitors` (`GlobalState`); counts unique browsers via a `localStorage` flag.
 - [x] **Footer Cleanup**: Removed the fake `localStorage` "global likes" counter; replaced the dead TikTok/X/Instagram links with a native Web Share button (clipboard fallback on desktop); fixed the version label to `v1.3.0`.

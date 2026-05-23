@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CATEGORIES } from '@/types';
+import { playSound } from '@/lib/sound';
 
 function Toggle({ label, active, onToggle, title }: { label: string, active: boolean, onToggle: () => void, title?: string }) {
     return (
@@ -35,7 +36,7 @@ export default function Legend() {
                     <Toggle
                         label="31 Days"
                         active={monthView}
-                        onToggle={() => setMonthView(v => !v)}
+                        onToggle={() => { playSound('toggle'); setMonthView(v => !v); }}
                         title="Monthly view — coming soon"
                     />
                 </div>

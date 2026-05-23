@@ -12,6 +12,8 @@ import SegmentsModal from './segments-modal';
 import { generateEventTitle, generateBorderGradient, getButtonState, generateICal, generateDaySummary } from '@/lib/calendar';
 import { expandEvents } from '@/lib/recurrence-utils';
 import { Share2 } from 'lucide-react';
+import { playSound } from '@/lib/sound';
+import FlipDate from './flip-date';
 
 interface Event extends Omit<PrismaEvent, 'recurrenceRule' | 'recurrenceEnd' | 'start' | 'end'> {
     start: Date | string;
@@ -136,15 +138,17 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
         isSameDay(new Date(event.start), selectedDate) && !event.deleted
     );
 
-    const goToPreviousWeek = () => setCurrentDate(addDays(currentDate, -7));
-    const goToNextWeek = () => setCurrentDate(addDays(currentDate, 7));
+    const goToPreviousWeek = () => { playSound('click'); setCurrentDate(addDays(currentDate, -7)); };
+    const goToNextWeek = () => { playSound('click'); setCurrentDate(addDays(currentDate, 7)); };
     const goToToday = () => {
+        playSound('click');
         const today = new Date();
         setCurrentDate(today);
         setSelectedDay(today.getDay());
     };
 
     const openSegmentsModal = (hour: Date, existingSegments: Segment[] = [], eventId: string | null = null, recurrenceRule: RecurrenceRule = null, recurrenceEnd: Date | null = null) => {
+        playSound('open');
         setActiveHour(hour);
         setActiveSegments(existingSegments);
         setActiveEventId(eventId);
@@ -185,6 +189,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
         });
 
         if (occupiedDuration + newDuration > 60) {
+            playSound('error');
             alert(`⚠️ Time Conflict!\n\nThis hour already has ${occupiedDuration}m of activities.\nYou are trying to add ${newDuration}m, which exceeds the 60m limit.`);
             return;
         }
@@ -225,6 +230,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
             if (res.ok) {
                 const savedEvent = await res.json();
                 setEvents(prev => [...prev, savedEvent]);
+                playSound('save');
             } else if (res.status === 401) {
                 // Stale/orphaned session (e.g. user row removed after a DB reset):
                 // the JWT is still valid but no longer maps to a user. Clear it and re-auth.
@@ -303,6 +309,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
     // --- Drag & Drop Handlers ---
 
     const handleDragStart = (e: React.DragEvent, eventId: string) => {
+        playSound('pickup');
         dragEventIdRef.current = eventId;
         setIsDragging(true);
         e.dataTransfer.effectAllowed = 'move';
@@ -346,6 +353,8 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
         // Don't do anything if dropped on the same hour
         if (oldStart.getHours() === targetHour.getHours() && isSameDay(oldStart, selectedDate)) return;
 
+        playSound('drop');
+
         // Build new start/end preserving duration
         const duration = oldEnd.getTime() - oldStart.getTime();
         const newStart = new Date(selectedDate);
@@ -388,6 +397,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
     };
 
     const exportToICal = () => {
+        playSound('save');
         const icalContent = generateICal(events);
         const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' });
         const url = URL.createObjectURL(blob);
@@ -400,6 +410,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
     };
 
     const handleShare = () => {
+        playSound('click');
         const summary = generateDaySummary(selectedDate, dayEvents);
         navigator.clipboard.writeText(summary).then(() => {
             alert('✓ Day summary copied to clipboard!\n\nReady for neural broadcast.');
@@ -435,10 +446,8 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                     <ChevronLeft className="w-6 h-6 border rounded-lg border-current" />
                 </button>
                 <div className="text-center">
-                    <h2 className={clsx("text-sm font-black uppercase tracking-[0.3em]", getColor(selectedDay).inactiveText)}>Temporal Range</h2>
-                    <p className="text-xs text-white/60 font-mono mt-1">
-                        {format(weekStart, 'MMM d')} - {format(addDays(weekStart, 6), 'MMM d, yyyy')}
-                    </p>
+                    <h2 className="text-sm font-black uppercase tracking-[0.3em] text-white mb-2">Temporal Range</h2>
+                    <FlipDate start={weekStart} end={addDays(weekStart, 6)} />
                 </div>
                 <button onClick={goToNextWeek} className={clsx("p-2 transition-colors", getColor(selectedDay).inactiveText, getColor(selectedDay).hoverBg.replace('bg-', 'text-'))}>
                     <ChevronRight className="w-6 h-6 border rounded-lg border-current" />
@@ -466,7 +475,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                     return (
                         <button
                             key={day.toISOString()}
-                            onClick={() => setSelectedDay(idx)}
+                            onClick={() => { playSound('click'); setSelectedDay(idx); }}
                             className={clsx(
                                 'flex-1 min-w-[70px] px-3 py-3 rounded-xl text-center transition-all duration-300 border',
                                 selectedDay === idx
@@ -658,7 +667,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                                                                     <Pencil size={16} />
                                                                 </button>
                                                                 <button
-                                                                    onClick={() => handleDeleteEvent(event.id)}
+                                                                    onClick={() => { playSound('delete'); handleDeleteEvent(event.id); }}
                                                                     className="text-red-400/50 hover:text-red-400 transition-colors"
                                                                     title="Delete Subroutine"
                                                                 >

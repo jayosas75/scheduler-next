@@ -2,6 +2,7 @@
 import { signOut } from 'next-auth/react';
 import Link from 'next/link';
 import ThemeSwitcher from './theme-switcher';
+import SoundToggle from './sound-toggle';
 
 export default function Header() {
     const handleSignOut = async () => {
@@ -20,6 +21,7 @@ export default function Header() {
                 </nav>
             </div>
             <div className="flex items-center gap-4">
+                <SoundToggle />
                 <ThemeSwitcher />
                 <button
                     onClick={handleSignOut}
