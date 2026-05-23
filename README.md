@@ -113,8 +113,7 @@ Ordered by **risk vs. priority** — safe, high-impact quick wins first; larger 
 
 ### 🟡 Tier 2 — High Priority (core functionality & security, worth the extra care)
 
-- [ ] **Fix Week Navigation Data Loading** — *highest-impact fix*: The daily view is seeded with only the *current* week's events ([calendar/page.tsx](src/app/calendar/page.tsx) fetches `startOfWeek`→`endOfWeek` of today) and never re-fetches on ◄ / ► navigation, so one-off events in other weeks never appear (only recurring expansions do). Re-fetch on week change. This also fixes **"Export All to iCal,"** which currently only exports the loaded week. *Medium risk — touches data fetching; needs care.*
-- [ ] **Advanced Security & Anti-Abuse**: API rate-limiting on `/api/auth/register` and `/api/auth/login` to stop spam/brute-force, strict XSS sanitization of event inputs, and a robust Content Security Policy (CSP). *Medium/high risk — CSP and auth changes can break flows; stage carefully.*
+✅ **All cleared** — see the Completed section below.
 
 ### 🔵 Tier 3 — Larger Features (higher effort/risk, schedule deliberately)
 
@@ -126,6 +125,8 @@ Ordered by **risk vs. priority** — safe, high-impact quick wins first; larger 
 
 ### ✅ Completed
 
+- [x] **Advanced Security & Anti-Abuse**: Best-effort in-memory rate limiting ([rate-limit.ts](src/lib/rate-limit.ts)) on account creation (`POST /api/auth/register`) and the credentials login callback; input sanitization of event title/description/location/segment labels and the register name ([sanitize.ts](src/lib/sanitize.ts)), plus RFC-5545 escaping of iCal export fields; and a production Content Security Policy with hardening headers ([next.config.ts](next.config.ts), CSP relaxed in dev for HMR, theme script allowed via sha256 hash).
+- [x] **Fix Week Navigation Data Loading**: `DailyView` now fetches the full event set on mount (`GET /api/events`) instead of only the server-seeded current week, so one-off events in any week appear when navigating ◄ / ► and **"Export All to iCal"** now covers every week.
 - [x] **Retro Unique Visitor Counter**: Vintage 60s space-age odometer in the footer ([visitor-counter.tsx](src/components/visitor-counter.tsx)), backed by `/api/visitors` (`GlobalState`); counts unique browsers via a `localStorage` flag.
 - [x] **Footer Cleanup**: Removed the fake `localStorage` "global likes" counter; replaced the dead TikTok/X/Instagram links with a native Web Share button (clipboard fallback on desktop); fixed the version label to `v1.3.0`.
 - [x] **Legend "31 Days" Trigger**: Replaced the dead V-Sync/Grid toggles with a single **"31 Days"** control — a placeholder for the upcoming **Monthly View** (Tier 3).

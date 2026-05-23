@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { CATEGORIES, CategoryKey, Segment } from '@/types';
+import { escapeICalText } from '@/lib/sanitize';
 
 /**
  * UTILITIES FOR CALENDAR REPRESENTATION & EXPORT
@@ -107,9 +108,9 @@ export function generateICal(events: any[]): string {
             `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
             `DTSTART:${startStr}`,
             `DTEND:${endStr}`,
-            `SUMMARY:${event.title}`,
-            `DESCRIPTION:${event.description || ''}`,
-            `LOCATION:${event.location || ''}`,
+            `SUMMARY:${escapeICalText(event.title)}`,
+            `DESCRIPTION:${escapeICalText(event.description || '')}`,
+            `LOCATION:${escapeICalText(event.location || '')}`,
             'END:VEVENT'
         ].join('\r\n');
     }).join('\r\n');

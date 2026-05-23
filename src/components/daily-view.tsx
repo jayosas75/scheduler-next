@@ -5,7 +5,7 @@ import { signOut } from 'next-auth/react';
 import { format, addDays, startOfWeek, eachHourOfInterval, isSameDay, isToday as isDateToday } from 'date-fns';
 import { clsx } from 'clsx';
 import type { Event as PrismaEvent } from '@prisma/client';
-import { ChevronLeft, ChevronRight, Trash2, Pencil, CirclePlus, Settings, Download, Repeat } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trash2, Pencil, CirclePlus, Settings, Download, Repeat, CalendarDays } from 'lucide-react';
 import { CATEGORIES, Segment, RecurrenceRule } from '@/types';
 import Legend from './legend';
 import SegmentsModal from './segments-modal';
@@ -58,6 +58,28 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
         if (nineAmRef.current) {
             nineAmRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
+    }, []);
+
+    // The server seeds only the current week; fetch the full event set so
+    // navigating to any week shows its one-off events and Export All covers everything.
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch('/api/events');
+                if (res.status === 401) {
+                    alert("Your session has expired. Please sign in again.");
+                    await signOut({ callbackUrl: '/login' });
+                    return;
+                }
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!cancelled) setEvents(data);
+            } catch (err) {
+                console.error('Failed to load events:', err);
+            }
+        })();
+        return () => { cancelled = true; };
     }, []);
 
     const weekStart = startOfWeek(currentDate);
@@ -116,6 +138,11 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
 
     const goToPreviousWeek = () => setCurrentDate(addDays(currentDate, -7));
     const goToNextWeek = () => setCurrentDate(addDays(currentDate, 7));
+    const goToToday = () => {
+        const today = new Date();
+        setCurrentDate(today);
+        setSelectedDay(today.getDay());
+    };
 
     const openSegmentsModal = (hour: Date, existingSegments: Segment[] = [], eventId: string | null = null, recurrenceRule: RecurrenceRule = null, recurrenceEnd: Date | null = null) => {
         setActiveHour(hour);
@@ -401,6 +428,9 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                 "flex items-center justify-between mb-4 border bg-black/80 rounded-2xl p-4 glow transition-colors duration-500",
                 getColor(selectedDay).inactiveBorder
             )}>
+                <button onClick={goToToday} className={clsx("p-2 transition-colors", getColor(selectedDay).inactiveText, getColor(selectedDay).hoverBg.replace('bg-', 'text-'))} title="Jump to Today">
+                    <CalendarDays className="w-6 h-6 border rounded-lg border-current" />
+                </button>
                 <button onClick={goToPreviousWeek} className={clsx("p-2 transition-colors", getColor(selectedDay).inactiveText, getColor(selectedDay).hoverBg.replace('bg-', 'text-'))}>
                     <ChevronLeft className="w-6 h-6 border rounded-lg border-current" />
                 </button>

@@ -3,20 +3,21 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { sanitizeText } from "@/lib/sanitize";
 
 const eventSchema = z.object({
-    title: z.string().min(1),
-    description: z.string().optional(),
+    title: z.string().min(1).transform((v) => sanitizeText(v)),
+    description: z.string().optional().transform((v) => (v === undefined ? v : sanitizeText(v))),
     start: z.string().datetime(),
     end: z.string().datetime(),
     allDay: z.boolean().optional(),
-    location: z.string().optional(),
+    location: z.string().optional().transform((v) => (v === undefined ? v : sanitizeText(v))),
     category: z.string().optional(),
     recurrenceRule: z.enum(['daily', 'weekly', 'monthly']).optional().nullable(),
     recurrenceEnd: z.string().datetime().optional().nullable(),
     segments: z.array(z.object({
         offset: z.number(),
-        label: z.string(),
+        label: z.string().transform((v) => sanitizeText(v, 100)),
         category: z.string(),
     })).optional(),
 });
