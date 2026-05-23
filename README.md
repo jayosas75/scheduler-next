@@ -105,15 +105,39 @@ Synced by the Chronos... the end is not here!
 
 ## 📅 Roadmap / TODO
 
-- [ ] **Cool Landing Page**: Build a vibrant, premium landing page inspired by [Tricks Stickers](https://tricks-stickers.webflow.io/) with rich aesthetics, interactive elements, smooth animations, and bold, modern typography.
-- [x] **Get Deployment on Vercel Complete**: Resolve build errors and verify production environment.
-- [x] **Drag & Drop**: Implement intuitive event rescheduling by dragging.
-- [x] **Recurring Events**: Add support for daily/weekly/monthly routines.
-- [x] **Data Export**: Export schedule to iCal or PDF format (iCal implemented).
-- [ ] **Social Sharing**: Generate "Day at a Glance" images for social media.
+Ordered by **risk vs. priority** — safe, high-impact quick wins first; larger or riskier work later.
+
+### 🟢 Tier 1 — Quick Wins (low risk, high impact)
+
+✅ **All cleared** — see the Completed section below.
+
+### 🟡 Tier 2 — High Priority (core functionality & security, worth the extra care)
+
+- [ ] **Fix Week Navigation Data Loading** — *highest-impact fix*: The daily view is seeded with only the *current* week's events ([calendar/page.tsx](src/app/calendar/page.tsx) fetches `startOfWeek`→`endOfWeek` of today) and never re-fetches on ◄ / ► navigation, so one-off events in other weeks never appear (only recurring expansions do). Re-fetch on week change. This also fixes **"Export All to iCal,"** which currently only exports the loaded week. *Medium risk — touches data fetching; needs care.*
+- [ ] **Advanced Security & Anti-Abuse**: API rate-limiting on `/api/auth/register` and `/api/auth/login` to stop spam/brute-force, strict XSS sanitization of event inputs, and a robust Content Security Policy (CSP). *Medium/high risk — CSP and auth changes can break flows; stage carefully.*
+
+### 🔵 Tier 3 — Larger Features (higher effort/risk, schedule deliberately)
+
+- [ ] **Monthly View**: Add a month-grid (31-day) calendar view alongside the existing week/daily view. Triggered by the **"31 Days"** toggle already placed in the legend bar ([legend.tsx](src/components/legend.tsx)), which is currently a no-op placeholder.
+- [ ] **UI Sound Effects**: Soft retro-cyberpunk sci-fi sounds for clicks, slide-ins, and drag-and-drops, with an easily accessible global mute button.
+- [ ] **Social Sharing**: Generate "Day at a Glance" images for social media (pairs with the share-links fix in Tier 1).
+- [ ] **AI Netrunner Assistant**: A natural-language command bar to create, shift, or optimize schedules from text requests.
 - [ ] **Offline Mode**: Full PWA support for offline scheduling.
-- [x] **Voice Interface**: Add voice commands for hands-free entry.
-- [x] **Live Hour Progress**: Add a cyberpunk progress bar to the current hour slot in the daily view that updates in real-time.
+
+### ✅ Completed
+
+- [x] **Retro Unique Visitor Counter**: Vintage 60s space-age odometer in the footer ([visitor-counter.tsx](src/components/visitor-counter.tsx)), backed by `/api/visitors` (`GlobalState`); counts unique browsers via a `localStorage` flag.
+- [x] **Footer Cleanup**: Removed the fake `localStorage` "global likes" counter; replaced the dead TikTok/X/Instagram links with a native Web Share button (clipboard fallback on desktop); fixed the version label to `v1.3.0`.
+- [x] **Legend "31 Days" Trigger**: Replaced the dead V-Sync/Grid toggles with a single **"31 Days"** control — a placeholder for the upcoming **Monthly View** (Tier 3).
+- [x] **Removed Orphaned Scheduler Code**: Deleted the unused `SchedulerApp.tsx` and the unscoped `/api/schedule` route, closing a latent multi-user data-leak.
+- [x] **Cool Landing Page**: Vibrant, premium landing page inspired by [Tricks Stickers](https://tricks-stickers.webflow.io/) — dynamic parallax, scroll-reveal, rhythm animations, bold typography.
+- [x] **Neon Accents Customization**: Header palette picker with six themes (Cyber Cyan, Matrix Green, Tokyo Pink, Cyberpunk Yellow, Synth Purple, Blood Orange), persisted to `localStorage` and applied before paint (no flash).
+- [x] **Get Deployment on Vercel Complete**: Resolved build errors and verified production environment.
+- [x] **Drag & Drop**: Intuitive event rescheduling by dragging.
+- [x] **Recurring Events**: Daily/weekly/monthly routines.
+- [x] **Data Export**: Export schedule to iCal (PDF still open).
+- [x] **Voice Interface**: Voice commands for hands-free entry.
+- [x] **Live Hour Progress**: Real-time cyberpunk progress bar on the current hour slot.
 
 ## 🧪 Testing
 

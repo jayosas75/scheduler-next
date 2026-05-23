@@ -41,7 +41,10 @@ export async function POST(req: Request) {
         });
 
         if (!user) {
-            return NextResponse.json({ message: "User not found" }, { status: 404 });
+            return NextResponse.json(
+                { message: "Session expired. Please sign in again." },
+                { status: 401 }
+            );
         }
 
         const body = await req.json();
@@ -106,7 +109,10 @@ export async function GET(req: Request) {
         });
 
         if (!user) {
-            return NextResponse.json({ message: "User not found" }, { status: 404 });
+            return NextResponse.json(
+                { message: "Session expired. Please sign in again." },
+                { status: 401 }
+            );
         }
 
         const events = await prisma.event.findMany({
@@ -132,11 +138,32 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
+        const user = await prisma.user.findUnique({
+            where: { email: session.user.email },
+            select: { id: true },
+        });
+
+        if (!user) {
+            return NextResponse.json(
+                { message: "Session expired. Please sign in again." },
+                { status: 401 }
+            );
+        }
+
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
 
         if (!id) {
             return NextResponse.json({ message: "Missing event id" }, { status: 400 });
+        }
+
+        // Verify the event belongs to this user before deleting
+        const existing = await prisma.event.findFirst({
+            where: { id, userId: user.id },
+        });
+
+        if (!existing) {
+            return NextResponse.json({ message: "Event not found" }, { status: 404 });
         }
 
         await prisma.event.delete({
@@ -166,7 +193,10 @@ export async function PATCH(req: Request) {
         });
 
         if (!user) {
-            return NextResponse.json({ message: "User not found" }, { status: 404 });
+            return NextResponse.json(
+                { message: "Session expired. Please sign in again." },
+                { status: 401 }
+            );
         }
 
         const body = await req.json();

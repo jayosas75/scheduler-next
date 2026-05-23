@@ -1,7 +1,7 @@
+import { auth } from '@/auth';
+import Landing from '@/components/landing/landing';
 
-import { redirect } from 'next/navigation';
-
-export default function Home() {
-  redirect('/login');
+export default async function Home() {
+    const session = await auth();
+    return <Landing isAuthed={!!session?.user} />;
 }
-

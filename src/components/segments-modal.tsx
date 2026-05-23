@@ -294,7 +294,7 @@ export default function SegmentsModal({ isOpen, onClose, onSave, initialSegments
                                 className={clsx(
                                     "p-1 rounded transition-all duration-300",
                                     isListening === i 
-                                        ? "text-cyan-300 bg-cyan-500/20 animate-pulse shadow-[0_0_10px_rgba(0,255,255,0.5)] scale-110" 
+                                        ? "text-cyan-300 bg-cyan-500/20 animate-pulse shadow-[0_0_10px_rgba(var(--accent-rgb),0.5)] scale-110"
                                         : "text-cyan-500/50 hover:text-cyan-400 hover:bg-cyan-500/10"
                                 )}
                                 title="Dictate activity"
@@ -347,7 +347,7 @@ export default function SegmentsModal({ isOpen, onClose, onSave, initialSegments
                         </button>
                         <button
                             onClick={handleSave}
-                            className="bg-cyan-500 text-black px-4 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-cyan-400 transition-colors shadow-[0_0_15px_rgba(0,255,255,0.3)]"
+                            className="bg-cyan-500 text-black px-4 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-cyan-400 transition-colors shadow-[0_0_15px_rgba(var(--accent-rgb),0.3)]"
                         >
                             Save Map
                         </button>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { signOut } from 'next-auth/react';
 import { format, addDays, startOfWeek, eachHourOfInterval, isSameDay, isToday as isDateToday } from 'date-fns';
 import { clsx } from 'clsx';
 import type { Event as PrismaEvent } from '@prisma/client';
@@ -197,6 +198,11 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
             if (res.ok) {
                 const savedEvent = await res.json();
                 setEvents(prev => [...prev, savedEvent]);
+            } else if (res.status === 401) {
+                // Stale/orphaned session (e.g. user row removed after a DB reset):
+                // the JWT is still valid but no longer maps to a user. Clear it and re-auth.
+                alert("Your session has expired. Please sign in again.");
+                await signOut({ callbackUrl: '/login' });
             } else {
                 const errorData = await res.json().catch(() => ({}));
                 console.error("Failed to save event:", res.status, errorData);
@@ -493,7 +499,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                             className={clsx(
                                 'group border-b border-cyan-500/10 transition-all duration-200 relative overflow-hidden',
                                 dragOverHour === hourNum && isDragging
-                                    ? 'bg-cyan-500/15 ring-1 ring-cyan-400/60 ring-inset shadow-[inset_0_0_12px_rgba(0,255,255,0.15)]'
+                                    ? 'bg-cyan-500/15 ring-1 ring-cyan-400/60 ring-inset shadow-[inset_0_0_12px_rgba(var(--accent-rgb),0.15)]'
                                     : 'hover:bg-cyan-500/5',
                                 viewingToday && hourNum === currentHour && 'hour-progress-active'
                             )}
@@ -509,7 +515,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                                         className="absolute inset-x-0 top-0 pointer-events-none z-[1] transition-all duration-[15s] ease-linear"
                                         style={{
                                             height: `${progressPercent}%`,
-                                            background: 'linear-gradient(to bottom, rgba(0, 255, 255, 0.06) 0%, rgba(0, 255, 255, 0.03) 70%, rgba(0, 255, 255, 0.08) 100%)',
+                                            background: 'linear-gradient(to bottom, rgba(var(--accent-rgb), 0.06) 0%, rgba(var(--accent-rgb), 0.03) 70%, rgba(var(--accent-rgb), 0.08) 100%)',
                                         }}
                                     />
                                     {/* Scanline - the "now" marker */}
@@ -517,7 +523,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                                         className="absolute inset-x-0 h-[2px] pointer-events-none z-[2] scanline-now transition-all duration-[15s] ease-linear"
                                         style={{
                                             top: `${progressPercent}%`,
-                                            background: 'linear-gradient(90deg, transparent 0%, rgba(0, 255, 255, 0.3) 10%, rgba(0, 255, 255, 1) 30%, rgba(255, 255, 255, 1) 50%, rgba(0, 255, 255, 1) 70%, rgba(0, 255, 255, 0.3) 90%, transparent 100%)',
+                                            background: 'linear-gradient(90deg, transparent 0%, rgba(var(--accent-rgb), 0.3) 10%, rgba(var(--accent-rgb), 1) 30%, rgba(255, 255, 255, 1) 50%, rgba(var(--accent-rgb), 1) 70%, rgba(var(--accent-rgb), 0.3) 90%, transparent 100%)',
                                         }}
                                     />
                                 </>

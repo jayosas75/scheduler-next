@@ -1,42 +1,36 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
+import { Share2, Check } from 'lucide-react';
+import VisitorCounter from './visitor-counter';
 
 export default function Footer() {
-    const [likes, setLikes] = useState(0);
-    const [liked, setLiked] = useState(false);
-    const [animating, setAnimating] = useState(false);
+    const [copied, setCopied] = useState(false);
 
-    useEffect(() => {
-        // Load likes
-        const storedLikes = localStorage.getItem('yosas-global-likes');
-        const userLiked = localStorage.getItem('yosas-user-liked') === 'true';
-
-        setLikes(storedLikes ? parseInt(storedLikes) : 1337);
-        setLiked(userLiked);
-    }, []);
-
-    const handleLike = () => {
-        if (liked) return;
-
-        const newLikes = likes + 1;
-        setLikes(newLikes);
-        setLiked(true);
-        setAnimating(true);
-
-        localStorage.setItem('yosas-global-likes', newLikes.toString());
-        localStorage.setItem('yosas-user-liked', 'true');
-
-        setTimeout(() => setAnimating(false), 300);
+    const handleShare = async () => {
+        const url = typeof window !== 'undefined' ? window.location.origin : '';
+        const shareData = {
+            title: 'Scheduler // 2026',
+            text: 'Jack into the neon time matrix — a cyberpunk calendar for 2026.',
+            url,
+        };
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(url);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            }
+        } catch {
+            // user dismissed the share sheet — no-op
+        }
     };
 
     const handleReset = () => {
-        if (window.confirm('Reset local preferences and likes? This does not delete your calendar events.')) {
-            localStorage.removeItem('yosas-global-likes');
-            localStorage.removeItem('yosas-user-liked');
-            setLikes(1337);
-            setLiked(false);
+        if (window.confirm('Reset local preferences? This does not delete your calendar events.')) {
+            localStorage.removeItem('yosas-visited');
         }
     };
 
@@ -47,7 +41,7 @@ export default function Footer() {
 
                     {/* Version & Links */}
                     <div className="flex items-center gap-4 text-cyan-400">
-                        <span className="opacity-60">v1.2.0</span>
+                        <span className="opacity-60">v1.3.0</span>
                         <span className="opacity-30">|</span>
                         <Link href="/about" className="text-yellow-400 hover:text-yellow-300 transition underline">
                             About
@@ -58,36 +52,17 @@ export default function Footer() {
                         </button>
                     </div>
 
-                    {/* Social Share */}
-                    <div className="flex items-center gap-3">
-                        <span className="text-cyan-500/50 uppercase tracking-widest text-[10px] font-bold">Share:</span>
-                        <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-200 transition hover:scale-110">TikTok</a>
-                        <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-200 transition hover:scale-110">X</a>
-                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-200 transition hover:scale-110">Instagram</a>
-                    </div>
+                    {/* Native Share */}
+                    <button
+                        onClick={handleShare}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10 hover:border-cyan-400 transition uppercase tracking-widest text-[10px] font-bold"
+                    >
+                        {copied ? <Check size={14} /> : <Share2 size={14} />}
+                        <span>{copied ? 'Link Copied' : 'Transmit'}</span>
+                    </button>
 
-                    {/* Like Counter */}
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={handleLike}
-                            disabled={liked}
-                            className={`flex items-center gap-2 px-3 py-1 rounded border transition font-bold uppercase tracking-wider ${liked
-                                ? 'border-yellow-400/30 text-yellow-400/50 cursor-not-allowed'
-                                : 'border-yellow-400 text-yellow-400 hover:bg-yellow-400/10 hover:scale-105 cursor-crosshair'
-                                }`}
-                        >
-                            <span>{liked ? '👍' : '👍'}</span>
-                            <span>{liked ? 'Liked!' : 'Like'}</span>
-                        </button>
-
-                        <div className="flex items-center gap-2 px-3 py-1 bg-yellow-400/10 border border-yellow-400/30 rounded">
-                            <span className={`text-yellow-400 font-bold font-mono ${animating ? 'scale-110 transition-transform' : ''}`}>
-                                {likes.toLocaleString()}
-                            </span>
-                            <span className="text-yellow-400/60 uppercase text-[10px] font-bold tracking-widest">global likes</span>
-                        </div>
-                    </div>
-
+                    {/* Retro Visitor Counter */}
+                    <VisitorCounter />
                 </div>
 
                 {/* Debug info */}

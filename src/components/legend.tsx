@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { CATEGORIES } from '@/types';
 
-function Toggle({ label, active, onToggle }: { label: string, active: boolean, onToggle: () => void }) {
+function Toggle({ label, active, onToggle, title }: { label: string, active: boolean, onToggle: () => void, title?: string }) {
     return (
-        <div onClick={onToggle} className="flex items-center gap-2 cursor-pointer group select-none">
+        <div onClick={onToggle} title={title} className="flex items-center gap-2 cursor-pointer group select-none">
             <div className={`w-8 h-4 rounded-full border border-white/50 relative transition-all duration-300 ${active ? 'bg-white/20 shadow-[0_0_10px_white]' : 'bg-black'}`}>
                 <div className={`absolute top-0.5 bottom-0.5 w-3 rounded-full bg-white shadow-[0_0_5px_white] transition-all duration-300 ${active ? 'translate-x-4' : 'translate-x-0.5'}`} />
             </div>
@@ -18,7 +18,8 @@ function Toggle({ label, active, onToggle }: { label: string, active: boolean, o
 
 export default function Legend() {
     const [showInfo, setShowInfo] = useState(false);
-    const [toggles, setToggles] = useState({ t1: false, t2: true });
+    // Placeholder for the upcoming Monthly view. Toggling has no effect yet.
+    const [monthView, setMonthView] = useState(false);
 
     return (
         <div className="relative bg-black/60 border border-cyan-500/30 rounded-2xl p-4 scanlines mt-4 mb-6">
@@ -31,8 +32,12 @@ export default function Legend() {
                 ))}
 
                 <div className="hidden md:flex gap-4 ml-4 px-4 border-l border-cyan-500/30">
-                    <Toggle label="V-Sync" active={toggles.t1} onToggle={() => setToggles(p => ({ ...p, t1: !p.t1 }))} />
-                    <Toggle label="Grid" active={toggles.t2} onToggle={() => setToggles(p => ({ ...p, t2: !p.t2 }))} />
+                    <Toggle
+                        label="31 Days"
+                        active={monthView}
+                        onToggle={() => setMonthView(v => !v)}
+                        title="Monthly view — coming soon"
+                    />
                 </div>
 
                 <button

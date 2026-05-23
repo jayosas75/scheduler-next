@@ -1,6 +1,7 @@
 'use client';
 import { signOut } from 'next-auth/react';
 import Link from 'next/link';
+import ThemeSwitcher from './theme-switcher';
 
 export default function Header() {
     const handleSignOut = async () => {
@@ -18,7 +19,8 @@ export default function Header() {
                     <Link href="/calendar/import" className="hover:text-cyan-300 transition">Import</Link>
                 </nav>
             </div>
-            <div>
+            <div className="flex items-center gap-4">
+                <ThemeSwitcher />
                 <button
                     onClick={handleSignOut}
                     className="text-xs font-bold text-red-400 hover:text-red-300 transition uppercase tracking-wider"
