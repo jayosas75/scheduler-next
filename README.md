@@ -105,6 +105,7 @@ Synced by the Chronos... the end is not here!
 
 ## 📅 Roadmap / TODO
 
+- [ ] **Cool Landing Page**: Build a vibrant, premium landing page inspired by [Tricks Stickers](https://tricks-stickers.webflow.io/) with rich aesthetics, interactive elements, smooth animations, and bold, modern typography.
 - [x] **Get Deployment on Vercel Complete**: Resolve build errors and verify production environment.
 - [x] **Drag & Drop**: Implement intuitive event rescheduling by dragging.
 - [x] **Recurring Events**: Add support for daily/weekly/monthly routines.
