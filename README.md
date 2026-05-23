@@ -92,7 +92,8 @@ Synced by the Chronos... the end is not here!
 - [x] **Data Export**: Export schedule to iCal or PDF format (iCal implemented).
 - [ ] **Social Sharing**: Generate "Day at a Glance" images for social media.
 - [ ] **Offline Mode**: Full PWA support for offline scheduling.
-- [ ] **Voice Interface**: Add voice commands for hands-free entry.
+- [x] **Voice Interface**: Add voice commands for hands-free entry.
+- [x] **Live Hour Progress**: Add a cyberpunk progress bar to the current hour slot in the daily view that updates in real-time.
 
 ## 🧪 Testing
 

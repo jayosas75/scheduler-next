@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CircleX, CirclePlus, CircleMinus, Repeat } from 'lucide-react';
+import { CircleX, CirclePlus, CircleMinus, Repeat, Mic } from 'lucide-react';
 import { clsx } from 'clsx';
 import { CATEGORIES, Segment, RecurrenceRule } from '@/types';
 
@@ -19,6 +19,7 @@ export default function SegmentsModal({ isOpen, onClose, onSave, initialSegments
     const [segments, setSegments] = useState<(Segment & { duration: number })[]>([]);
     const [recurrenceRule, setRecurrenceRule] = useState<RecurrenceRule>(null);
     const [recurrenceEnd, setRecurrenceEnd] = useState<string>('');
+    const [isListening, setIsListening] = useState<number | null>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -131,6 +132,39 @@ export default function SegmentsModal({ isOpen, onClose, onSave, initialSegments
         const newSegments = [...segments];
         newSegments[index].duration = newDuration;
         recalculateOffsets(newSegments);
+    };
+
+    const startListening = (index: number) => {
+        // @ts-ignore
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert('Voice recognition is not supported in this browser.');
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => setIsListening(index);
+        
+        recognition.onresult = (event: any) => {
+            const transcript = event.results[0][0].transcript;
+            const newSegments = [...segments];
+            const currentLabel = newSegments[index].label.trim();
+            newSegments[index].label = currentLabel ? `${currentLabel} ${transcript}` : transcript;
+            setSegments(newSegments);
+        };
+
+        recognition.onerror = (event: any) => {
+            console.error('Speech recognition error:', event.error);
+            setIsListening(null);
+        };
+
+        recognition.onend = () => setIsListening(null);
+
+        recognition.start();
     };
 
     const handleSave = () => {
@@ -254,6 +288,19 @@ export default function SegmentsModal({ isOpen, onClose, onSave, initialSegments
                                 placeholder="Activity..."
                                 className="flex-1 bg-transparent border-b border-cyan-500/30 text-sm focus:border-cyan-400 outline-none px-2 py-1 text-cyan-100 transition-colors placeholder:text-cyan-500/30"
                             />
+
+                            <button
+                                onClick={() => startListening(i)}
+                                className={clsx(
+                                    "p-1 rounded transition-all duration-300",
+                                    isListening === i 
+                                        ? "text-cyan-300 bg-cyan-500/20 animate-pulse shadow-[0_0_10px_rgba(0,255,255,0.5)] scale-110" 
+                                        : "text-cyan-500/50 hover:text-cyan-400 hover:bg-cyan-500/10"
+                                )}
+                                title="Dictate activity"
+                            >
+                                <Mic size={18} />
+                            </button>
 
                             {segments.length > 1 && (
                                 <button

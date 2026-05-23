@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { format, addDays, startOfWeek, eachHourOfInterval, isSameDay } from 'date-fns';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { format, addDays, startOfWeek, eachHourOfInterval, isSameDay, isToday as isDateToday } from 'date-fns';
 import { clsx } from 'clsx';
 import type { Event as PrismaEvent } from '@prisma/client';
 import { ChevronLeft, ChevronRight, Trash2, Pencil, CirclePlus, Settings, Download, Repeat } from 'lucide-react';
@@ -38,20 +38,74 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
 
     // Drag & Drop state
     const dragEventIdRef = useRef<string | null>(null);
+    const nineAmRef = useRef<HTMLDivElement>(null);
     const [dragOverHour, setDragOverHour] = useState<number | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+
+    // Live Hour Progress state
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    useEffect(() => {
+        // Update current time every 15 seconds for smooth progress
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 15000);
+        return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
+        if (nineAmRef.current) {
+            nineAmRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, []);
 
     const weekStart = startOfWeek(currentDate);
     const daysArr = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-    // Generate hours (9 AM to 6 PM like original)
+    // Generate 24 hours
     const hours = eachHourOfInterval({
-        start: new Date(2024, 0, 1, 9, 0),
-        end: new Date(2024, 0, 1, 18, 0),
+        start: new Date(2024, 0, 1, 0, 0),
+        end: new Date(2024, 0, 1, 23, 0),
     });
 
     const selectedDate = daysArr[selectedDay];
+
+    // Live Hour Progress derived values
+    const viewingToday = isDateToday(selectedDate);
+    const currentHour = currentTime.getHours();
+    const currentMinute = currentTime.getMinutes();
+    const progressPercent = (currentMinute / 60) * 100;
+
+    // Determine if an event is past/active/future within the current hour
+    const getEventTimeState = useCallback((event: { start: Date | string; segments?: Segment[] }): 'past' | 'active' | 'future' => {
+        if (!viewingToday) return 'future'; // Not today, no dimming
+        const eventStart = new Date(event.start);
+        if (eventStart.getHours() !== currentHour) return 'future';
+
+        const eventStartMinute = eventStart.getMinutes();
+
+        // Calculate event end minute from segments
+        let eventEndMinute = 60; // default: assume fills to end of hour
+        if (event.segments && event.segments.length > 0) {
+            const sorted = [...event.segments].sort((a, b) => a.offset - b.offset);
+            const firstOffset = sorted[0].offset;
+            const lastSeg = sorted[sorted.length - 1];
+            // End = last segment offset + its duration (to next segment or 60)
+            const lastDuration = 60 - lastSeg.offset;
+            eventEndMinute = lastSeg.offset + lastDuration;
+            // But also consider the event might not start at offset 0
+            // The event occupies from its first segment offset to end
+            if (currentMinute >= eventEndMinute) return 'past';
+            if (currentMinute >= firstOffset) return 'active';
+            return 'future';
+        }
+
+        // No segments — use the event start minute
+        if (currentMinute >= eventStartMinute + 60) return 'past';
+        if (currentMinute >= eventStartMinute) return 'active';
+        return 'future';
+    }, [viewingToday, currentHour, currentMinute]);
 
     // Filter events for selected day (including segments and expanded recurring instances)
     const expandedEvents = expandEvents(events as any, weekStart, addDays(weekStart, 7));
@@ -322,24 +376,36 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
         });
     };
 
+    const dayColors = [
+        { activeBg: 'bg-cyan-500', activeText: 'text-black', activeBorder: 'border-cyan-400', shadow: 'shadow-[0_0_15px_rgba(34,211,238,0.4)]', inactiveText: 'text-cyan-400', inactiveBorder: 'border-cyan-500/30', hoverBg: 'hover:bg-cyan-500/10' },
+        { activeBg: 'bg-fuchsia-500', activeText: 'text-black', activeBorder: 'border-fuchsia-400', shadow: 'shadow-[0_0_15px_rgba(217,70,239,0.4)]', inactiveText: 'text-fuchsia-400', inactiveBorder: 'border-fuchsia-500/30', hoverBg: 'hover:bg-fuchsia-500/10' },
+        { activeBg: 'bg-yellow-500', activeText: 'text-black', activeBorder: 'border-yellow-400', shadow: 'shadow-[0_0_15px_rgba(234,179,8,0.4)]', inactiveText: 'text-yellow-400', inactiveBorder: 'border-yellow-500/30', hoverBg: 'hover:bg-yellow-500/10' },
+        { activeBg: 'bg-[#39ff14]', activeText: 'text-black', activeBorder: 'border-[#39ff14]', shadow: 'shadow-[0_0_15px_rgba(57,255,20,0.4)]', inactiveText: 'text-[#39ff14]', inactiveBorder: 'border-[#39ff14]/30', hoverBg: 'hover:bg-[#39ff14]/10' },
+    ];
+
+    const getColor = (idx: number) => dayColors[idx % dayColors.length];
+
     return (
         <div className="flex flex-col min-h-full bg-transparent p-4 lg:p-6">
             {/* Legend & Intro */}
             <Legend />
 
             {/* Week Navigation */}
-            <div className="flex items-center justify-between mb-4 border border-cyan-500/30 bg-black/80 rounded-2xl p-4 glow">
-                <button onClick={goToPreviousWeek} className="p-2 text-cyan-400 hover:text-cyan-300 transition-colors">
-                    <ChevronLeft className="w-6 h-6 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/10" />
+            <div className={clsx(
+                "flex items-center justify-between mb-4 border bg-black/80 rounded-2xl p-4 glow transition-colors duration-500",
+                getColor(selectedDay).inactiveBorder
+            )}>
+                <button onClick={goToPreviousWeek} className={clsx("p-2 transition-colors", getColor(selectedDay).inactiveText, getColor(selectedDay).hoverBg.replace('bg-', 'text-'))}>
+                    <ChevronLeft className="w-6 h-6 border rounded-lg border-current" />
                 </button>
                 <div className="text-center">
-                    <h2 className="text-sm font-black text-cyan-400 uppercase tracking-[0.3em]">Temporal Range</h2>
-                    <p className="text-xs text-cyan-100/60 font-mono mt-1">
+                    <h2 className={clsx("text-sm font-black uppercase tracking-[0.3em]", getColor(selectedDay).inactiveText)}>Temporal Range</h2>
+                    <p className="text-xs text-white/60 font-mono mt-1">
                         {format(weekStart, 'MMM d')} - {format(addDays(weekStart, 6), 'MMM d, yyyy')}
                     </p>
                 </div>
-                <button onClick={goToNextWeek} className="p-2 text-cyan-400 hover:text-cyan-300 transition-colors">
-                    <ChevronRight className="w-6 h-6 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/10" />
+                <button onClick={goToNextWeek} className={clsx("p-2 transition-colors", getColor(selectedDay).inactiveText, getColor(selectedDay).hoverBg.replace('bg-', 'text-'))}>
+                    <ChevronRight className="w-6 h-6 border rounded-lg border-current" />
                 </button>
                 <button
                     onClick={exportToICal}
@@ -359,25 +425,31 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
 
             {/* Day Tabs */}
             <nav className="flex overflow-x-auto gap-2 mb-6 no-scrollbar pb-2">
-                {daysArr.map((day, idx) => (
-                    <button
-                        key={day.toISOString()}
-                        onClick={() => setSelectedDay(idx)}
-                        className={clsx(
-                            'flex-1 min-w-[70px] px-3 py-3 rounded-xl text-center transition-all duration-300 border',
-                            selectedDay === idx
-                                ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_15px_rgba(0,255,255,0.4)]'
-                                : 'bg-black/60 text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/10'
-                        )}
-                    >
-                        <div className="text-[10px] font-black uppercase tracking-widest font-orbitron">{dayNames[idx]}</div>
-                        <div className="text-lg font-mono font-bold leading-tight mt-1">{format(day, 'd')}</div>
-                    </button>
-                ))}
+                {daysArr.map((day, idx) => {
+                    const c = getColor(idx);
+                    return (
+                        <button
+                            key={day.toISOString()}
+                            onClick={() => setSelectedDay(idx)}
+                            className={clsx(
+                                'flex-1 min-w-[70px] px-3 py-3 rounded-xl text-center transition-all duration-300 border',
+                                selectedDay === idx
+                                    ? `${c.activeBg} ${c.activeText} ${c.activeBorder} ${c.shadow}`
+                                    : `bg-black/60 ${c.inactiveText} ${c.inactiveBorder} ${c.hoverBg}`
+                            )}
+                        >
+                            <div className="text-[10px] font-black uppercase tracking-widest font-orbitron">{dayNames[idx]}</div>
+                            <div className="text-lg font-mono font-bold leading-tight mt-1">{format(day, 'd')}</div>
+                        </button>
+                    );
+                })}
             </nav>
 
             {/* Schedule View */}
-            <div className="flex-1 bg-black/60 border border-cyan-500/30 rounded-3xl glow scanlines">
+            <div className={clsx(
+                "flex-1 bg-black/60 border rounded-3xl glow scanlines overflow-y-auto h-[65vh] max-h-[850px] transition-colors duration-500",
+                getColor(selectedDay).inactiveBorder
+            )}>
                 {hours.map(hour => {
                     const hourNum = hour.getHours();
                     const hourEvents = dayEvents.filter(e => new Date(e.start).getHours() === hourNum);
@@ -417,20 +489,45 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                     return (
                         <div
                             key={hour.toISOString()}
+                            ref={hourNum === 9 ? nineAmRef : null}
                             className={clsx(
-                                'group border-b border-cyan-500/10 transition-all duration-200',
+                                'group border-b border-cyan-500/10 transition-all duration-200 relative overflow-hidden',
                                 dragOverHour === hourNum && isDragging
                                     ? 'bg-cyan-500/15 ring-1 ring-cyan-400/60 ring-inset shadow-[inset_0_0_12px_rgba(0,255,255,0.15)]'
-                                    : 'hover:bg-cyan-500/5'
+                                    : 'hover:bg-cyan-500/5',
+                                viewingToday && hourNum === currentHour && 'hour-progress-active'
                             )}
                             onDragOver={(e) => handleDragOver(e, hourNum)}
                             onDragLeave={handleDragLeave}
                             onDrop={(e) => handleDrop(e, hour)}
                         >
-                            <div className="flex px-4 py-4 gap-4 items-start">
+                            {/* Live Hour Progress Overlay + Scanline */}
+                            {viewingToday && hourNum === currentHour && (
+                                <>
+                                    {/* Progress sweep - fills from top */}
+                                    <div
+                                        className="absolute inset-x-0 top-0 pointer-events-none z-[1] transition-all duration-[15s] ease-linear"
+                                        style={{
+                                            height: `${progressPercent}%`,
+                                            background: 'linear-gradient(to bottom, rgba(0, 255, 255, 0.06) 0%, rgba(0, 255, 255, 0.03) 70%, rgba(0, 255, 255, 0.08) 100%)',
+                                        }}
+                                    />
+                                    {/* Scanline - the "now" marker */}
+                                    <div
+                                        className="absolute inset-x-0 h-[2px] pointer-events-none z-[2] scanline-now transition-all duration-[15s] ease-linear"
+                                        style={{
+                                            top: `${progressPercent}%`,
+                                            background: 'linear-gradient(90deg, transparent 0%, rgba(0, 255, 255, 0.3) 10%, rgba(0, 255, 255, 1) 30%, rgba(255, 255, 255, 1) 50%, rgba(0, 255, 255, 1) 70%, rgba(0, 255, 255, 0.3) 90%, transparent 100%)',
+                                        }}
+                                    />
+                                </>
+                            )}
+
+                            <div className="flex px-4 py-4 gap-4 items-start relative z-[3]">
                                 <div className={clsx(
                                     "w-20 text-sm font-black tracking-tighter pt-1 whitespace-nowrap font-orbitron transition-colors duration-300",
-                                    timeColorClass
+                                    timeColorClass,
+                                    viewingToday && hourNum === currentHour && 'time-label-active'
                                 )}
                                     style={{
                                         filter: `drop-shadow(0 0 5px ${shadowColor})`
@@ -442,8 +539,6 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                                 <div className="flex-1 flex flex-col gap-2">
                                     {hourEvents.length > 0 ? (
                                         hourEvents.map(event => {
-                                            // Calculate gradient border logic
-                                            // Handle legacy events (no segments) by synthesizing one
                                             const hasSegments = event.segments && event.segments.length > 0;
                                             const segmentsForBorder = hasSegments
                                                 ? event.segments!
@@ -480,14 +575,19 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                                                         'cursor-grab active:cursor-grabbing',
                                                         dragEventIdRef.current === event.id
                                                             ? 'opacity-40 scale-95'
-                                                            : 'opacity-100'
+                                                            : 'opacity-100',
+                                                        // Live Hour Progress: dim past, highlight active
+                                                        viewingToday && hourNum === currentHour && getEventTimeState(event) === 'past' && 'event-past',
                                                     )}
                                                     draggable
                                                     onDragStart={(e) => handleDragStart(e, event.id)}
                                                     onDragEnd={handleDragEnd}
                                                     title="Drag to reschedule"
                                                 >
-                                                    <div className="rounded-r-lg p-3 bg-black/40 border border-cyan-500/30 relative overflow-hidden">
+                                                    <div className={clsx(
+                                                        'rounded-r-lg p-3 bg-black/40 border border-cyan-500/30 relative overflow-hidden',
+                                                        viewingToday && hourNum === currentHour && getEventTimeState(event) === 'active' && 'event-active',
+                                                    )}>
                                                         {/* Gradient Border Strip */}
                                                         <div
                                                             className="absolute left-0 top-0 bottom-0 w-1.5"
@@ -534,11 +634,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                                                 </div>
                                             );
                                         })
-                                    ) : (
-                                        <div className="text-sm font-bold text-cyan-400/30 italic font-mono py-2 opacity-50">
-                                            // No data found for this temporal slot
-                                        </div>
-                                    )}
+                                    ) : null}
                                 </div>
 
                                 {/* Only show Add button if NOT full */}
