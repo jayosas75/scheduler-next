@@ -154,6 +154,15 @@ export async function DELETE(req: Request) {
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
 
+        // Bulk delete: wipe every event for this user. Scoped to userId so a
+        // user can only ever clear their own data; EventSegment rows cascade.
+        if (searchParams.get('all') === 'true') {
+            const result = await prisma.event.deleteMany({
+                where: { userId: user.id },
+            });
+            return NextResponse.json({ message: "All events deleted", count: result.count });
+        }
+
         if (!id) {
             return NextResponse.json({ message: "Missing event id" }, { status: 400 });
         }

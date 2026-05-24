@@ -5,11 +5,11 @@ import { signOut } from 'next-auth/react';
 import { format, addDays, startOfWeek, eachHourOfInterval, isSameDay, isToday as isDateToday } from 'date-fns';
 import { clsx } from 'clsx';
 import type { Event as PrismaEvent } from '@prisma/client';
-import { ChevronLeft, ChevronRight, Trash2, Pencil, CirclePlus, Settings, Download, Repeat, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trash2, Pencil, CirclePlus, Settings, Repeat, CalendarDays } from 'lucide-react';
 import { CATEGORIES, Segment, RecurrenceRule } from '@/types';
 import Legend from './legend';
 import SegmentsModal from './segments-modal';
-import { generateEventTitle, generateBorderGradient, getButtonState, generateICal, generateDaySummary } from '@/lib/calendar';
+import { generateEventTitle, generateBorderGradient, getButtonState, generateDaySummary } from '@/lib/calendar';
 import { expandEvents } from '@/lib/recurrence-utils';
 import { Share2 } from 'lucide-react';
 import { playSound } from '@/lib/sound';
@@ -396,19 +396,6 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
         dragEventIdRef.current = null;
     };
 
-    const exportToICal = () => {
-        playSound('save');
-        const icalContent = generateICal(events);
-        const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `calendar-export-${format(currentDate, 'yyyy-MM-dd')}.ics`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
     const handleShare = () => {
         playSound('click');
         const summary = generateDaySummary(selectedDate, dayEvents);
@@ -473,14 +460,6 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                         <ChevronRight className="w-6 h-6 border rounded-lg border-current" />
                     </button>
                     <button
-                        onClick={exportToICal}
-                        className="flex items-center gap-1.5 rounded-lg border border-yellow-500/30 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wider text-yellow-400 transition-colors hover:bg-yellow-500/10 hover:text-yellow-300"
-                        title="Download an iCal (.ics) file of your full schedule — import it into Google or Apple Calendar"
-                    >
-                        <Download className="w-4 h-4" />
-                        Export
-                    </button>
-                    <button
                         onClick={handleShare}
                         className="p-2 text-cyan-400 hover:text-cyan-300 transition-colors"
                         title="Share Day Summary"
@@ -514,7 +493,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
 
             {/* Schedule View */}
             <div className={clsx(
-                "flex-1 bg-black/60 border rounded-3xl glow scanlines overflow-y-auto h-[65vh] max-h-[850px] transition-colors duration-500",
+                "neon-scroll flex-1 bg-black/60 border rounded-3xl glow scanlines overflow-y-auto h-[65vh] max-h-[650px] transition-colors duration-500",
                 getColor(selectedDay).inactiveBorder
             )}>
                 {hours.map(hour => {

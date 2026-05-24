@@ -4,6 +4,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Share2, Check } from 'lucide-react';
 import VisitorCounter from './visitor-counter';
+import DeleteAllEvents from './delete-all-events';
+import { STORAGE_KEY as THEME_KEY } from './theme-switcher';
+import { MUTE_STORAGE_KEY } from '@/lib/sound';
 
 export default function Footer() {
     const [copied, setCopied] = useState(false);
@@ -29,8 +32,16 @@ export default function Footer() {
     };
 
     const handleReset = () => {
-        if (window.confirm('Reset local preferences? This does not delete your calendar events.')) {
-            localStorage.removeItem('yosas-visited');
+        if (window.confirm('Reset local preferences (theme, sound, visitor flag)?\n\nThis only affects this browser — it will NOT delete your calendar events.')) {
+            try {
+                localStorage.removeItem(THEME_KEY);
+                localStorage.removeItem(MUTE_STORAGE_KEY);
+                localStorage.removeItem('yosas-visited');
+            } catch {
+                /* storage unavailable — nothing to clear */
+            }
+            // Reload so theme/sound re-initialize to their defaults.
+            window.location.reload();
         }
     };
 
@@ -47,9 +58,11 @@ export default function Footer() {
                             About
                         </Link>
                         <span className="opacity-30">|</span>
-                        <button onClick={handleReset} className="text-red-400 hover:text-red-300 transition underline">
-                            Reset Local Data
+                        <button onClick={handleReset} className="text-cyan-400/80 hover:text-cyan-300 transition underline">
+                            Reset Preferences
                         </button>
+                        <span className="opacity-30">|</span>
+                        <DeleteAllEvents />
                     </div>
 
                     {/* Native Share */}
