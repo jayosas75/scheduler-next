@@ -2,13 +2,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Palette } from 'lucide-react';
+import { getPhaseThemeId } from '@/lib/sky';
 
 export const STORAGE_KEY = 'scheduler-theme';
 
 export type ThemeId = 'cyan' | 'matrix' | 'tokyo' | 'yellow' | 'synth' | 'orange' | 'white';
-// A stored preference can also be 'auto', which resolves to the current
-// weekday's color at load time (CSS can't pick a color by weekday).
-export type ThemePref = ThemeId | 'auto';
+// A stored preference can also resolve dynamically at load time (CSS can't
+// pick a color by weekday or time of day):
+//   'auto' → the current weekday's color
+//   'sky'  → the current time-of-day phase color (kept live by SkyGutter)
+export type ThemePref = ThemeId | 'auto' | 'sky';
 
 export const THEMES: { id: ThemeId; label: string; swatch: string }[] = [
     { id: 'cyan', label: 'Cyber Cyan', swatch: '#00ffff' },
@@ -25,17 +28,21 @@ export const THEMES: { id: ThemeId; label: string; swatch: string }[] = [
 export const DAY_THEME_IDS: ThemeId[] = ['cyan', 'matrix', 'tokyo', 'yellow', 'synth', 'orange', 'white'];
 
 export function resolveThemeId(pref: ThemePref): ThemeId {
-    return pref === 'auto' ? DAY_THEME_IDS[new Date().getDay()] : pref;
+    if (pref === 'auto') return DAY_THEME_IDS[new Date().getDay()];
+    if (pref === 'sky') return getPhaseThemeId(new Date());
+    return pref;
 }
 
-const ALL_PREFS: ThemePref[] = [...THEMES.map((t) => t.id), 'auto'];
+const ALL_PREFS: ThemePref[] = [...THEMES.map((t) => t.id), 'auto', 'sky'];
 
 function applyTheme(pref: ThemePref) {
     document.documentElement.dataset.theme = resolveThemeId(pref);
 }
 
-// Rainbow swatch used for the Auto option, signalling that it shifts.
+// Rainbow swatch for the weekday Auto option, signalling that it shifts.
 const AUTO_SWATCH = 'conic-gradient(from 90deg, #00ffff, #00ff9c, #fcee0a, #ff5e1a, #ff2e88, #b026ff, #ffffff, #00ffff)';
+// Dawn → day → dusk → night gradient for the Auto · Sky option.
+const SKY_SWATCH = 'linear-gradient(120deg, #ff2e88 0%, #00ffff 38%, #ff5e1a 66%, #b026ff 100%)';
 
 export default function ThemeSwitcher() {
     const [current, setCurrent] = useState<ThemePref>('cyan');
@@ -79,8 +86,9 @@ export default function ThemeSwitcher() {
 
     const resolvedId = resolveThemeId(current);
     const resolvedTheme = THEMES.find((t) => t.id === resolvedId) ?? THEMES[0];
-    // When Auto is active the button shows today's resolved color.
-    const buttonSwatch = current === 'auto' ? AUTO_SWATCH : resolvedTheme.swatch;
+    // Auto modes show their own dynamic swatch on the button.
+    const buttonSwatch =
+        current === 'auto' ? AUTO_SWATCH : current === 'sky' ? SKY_SWATCH : resolvedTheme.swatch;
 
     return (
         <div ref={ref} className="relative">
@@ -128,6 +136,28 @@ export default function ThemeSwitcher() {
                             </span>
                         </span>
                         {current === 'auto' && <span className="ml-auto text-cyan-300">●</span>}
+                    </button>
+
+                    {/* Auto · Sky — accent follows the time of day */}
+                    <button
+                        role="menuitemradio"
+                        aria-checked={current === 'sky'}
+                        onClick={() => select('sky')}
+                        className={`flex w-full items-center gap-3 border-b border-cyan-500/20 px-3 py-2 text-left text-xs uppercase tracking-wider transition hover:bg-cyan-500/10 ${
+                            current === 'sky' ? 'text-cyan-200' : 'text-cyan-400/70'
+                        }`}
+                    >
+                        <span
+                            className="h-3.5 w-3.5 shrink-0 rounded-full"
+                            style={{ background: SKY_SWATCH, boxShadow: `0 0 8px ${resolvedTheme.swatch}` }}
+                        />
+                        <span className="flex flex-col leading-tight">
+                            <span>Auto · Sky</span>
+                            <span className="text-[9px] normal-case tracking-normal opacity-60">
+                                Now: {THEMES.find((t) => t.id === resolveThemeId('sky'))?.label}
+                            </span>
+                        </span>
+                        {current === 'sky' && <span className="ml-auto text-cyan-300">●</span>}
                     </button>
 
                     {THEMES.map((t) => (

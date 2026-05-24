@@ -868,3 +868,78 @@ a:hover {
     .end-of-night { animation: none; opacity: 1; }
     .eon-moon, .eon-star { animation: none; }
 }
+
+/* ── Day-cycle gutter sky ──────────────────────────────────────────────────
+   A moody background that progresses with real local time. Brightness comes
+   from the per-phase gradient; hue comes from --accent (so it matches the
+   active theme, and under "Auto · Sky" the accent itself moves with the day). */
+.sky-gutter {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.sky-bg {
+    position: absolute;
+    inset: 0;
+    transition: background 3s linear;
+}
+
+.sky-gutter[data-phase="night"]  .sky-bg { background: linear-gradient(to bottom, rgba(var(--accent-rgb), 0.02) 0%, #000000 45%, rgba(var(--accent-rgb), 0.10) 100%); }
+.sky-gutter[data-phase="dawn"]   .sky-bg { background: linear-gradient(to bottom, rgba(var(--accent-rgb), 0.05) 0%, #050208 40%, rgba(var(--accent-rgb), 0.22) 100%); }
+.sky-gutter[data-phase="day"]    .sky-bg { background: linear-gradient(to bottom, rgba(var(--accent-rgb), 0.08) 0%, #02060a 50%, rgba(var(--accent-rgb), 0.16) 100%); }
+.sky-gutter[data-phase="golden"] .sky-bg { background: linear-gradient(to bottom, rgba(var(--accent-rgb), 0.06) 0%, #0a0402 45%, rgba(var(--accent-rgb), 0.30) 100%); }
+.sky-gutter[data-phase="dusk"]   .sky-bg { background: linear-gradient(to bottom, rgba(var(--accent-rgb), 0.04) 0%, #050208 40%, rgba(var(--accent-rgb), 0.22) 100%); }
+
+.sky-horizon {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 45%;
+    background: radial-gradient(ellipse 75% 100% at 50% 100%, rgba(var(--accent-rgb), 0.25), transparent 70%);
+    transition: opacity 3s linear;
+}
+
+.sky-stars {
+    position: absolute;
+    inset: 0;
+    transition: opacity 2s linear;
+}
+.sky-gutter[data-phase="day"]    .sky-stars,
+.sky-gutter[data-phase="golden"] .sky-stars { opacity: 0; }
+.sky-gutter[data-phase="dawn"]   .sky-stars,
+.sky-gutter[data-phase="dusk"]   .sky-stars { opacity: 0.45; }
+.sky-gutter[data-phase="night"]  .sky-stars { opacity: 1; }
+
+.sky-star {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 4px rgba(var(--accent-rgb), 0.8);
+    animation: eon-twinkle 3s ease-in-out infinite;
+}
+
+.sky-body {
+    position: absolute;
+    width: 42px;
+    height: 42px;
+    margin-left: -21px;
+    border-radius: 50%;
+    transition: left 60s linear, bottom 60s linear;
+}
+.sky-body--sun {
+    background: radial-gradient(circle, #ffffff 0%, rgba(var(--accent-rgb), 0.95) 40%, transparent 72%);
+    box-shadow: 0 0 40px 10px rgba(var(--accent-rgb), 0.45);
+}
+.sky-body--moon {
+    background: radial-gradient(circle at 38% 38%, #ffffff 0%, #cdd6e6 45%, transparent 72%);
+    box-shadow: 0 0 26px 6px rgba(200, 210, 230, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sky-star { animation: none; }
+    .sky-body { transition: none; }
+}
