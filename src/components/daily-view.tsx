@@ -48,8 +48,11 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
     // Auto-scroll: bring the current hour near the top of the grid on load.
     const scrollRef = useRef<HTMLDivElement>(null);
     const currentHourRef = useRef<HTMLDivElement>(null);
-    // Buffer below the final hour so even late hours can sit near the top.
+    // Trailing space below the final hour so the current hour can sit near the
+    // top (often 0 — see the measure effect). `ready` gates the scroll until
+    // that space has been measured and applied.
     const [bottomSpacer, setBottomSpacer] = useState(0);
+    const [scrollReady, setScrollReady] = useState(false);
 
     // Live Hour Progress state
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -62,18 +65,27 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
         return () => clearInterval(timer);
     }, []);
 
-    // Size the bottom buffer to (visible height − one hour row) so any hour —
-    // including the last — can be scrolled to the top of the grid.
+    // Add only as much trailing space as the current hour actually needs to
+    // reach the top — no fixed buffer, so there's minimal dead space (e.g.
+    // early-morning hours need none, since plenty of hours sit below them).
     useEffect(() => {
         const container = scrollRef.current;
-        if (!container) return;
-        const rowH = currentHourRef.current?.offsetHeight ?? 64;
-        setBottomSpacer(Math.max(0, container.clientHeight - rowH));
+        const row = currentHourRef.current;
+        if (!container || !row) return;
+        const gap = 12; // small "near top" offset, matches the scroll effect
+        const rowTop =
+            row.getBoundingClientRect().top -
+            container.getBoundingClientRect().top +
+            container.scrollTop;
+        // Extra space needed beyond the natural content (rows + sign-off art).
+        const needed = rowTop - gap + container.clientHeight - container.scrollHeight;
+        setBottomSpacer(Math.max(0, needed));
+        setScrollReady(true);
     }, []);
 
-    // Once the buffer is in place, scroll the current hour near the top.
+    // Once the trailing space is applied, scroll the current hour near the top.
     useEffect(() => {
-        if (bottomSpacer <= 0) return;
+        if (!scrollReady) return;
         const container = scrollRef.current;
         const row = currentHourRef.current;
         if (!container || !row) return;
@@ -83,7 +95,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
             container.scrollTop -
             12; // small gap above so it reads as "near top", not flush
         container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-    }, [bottomSpacer]);
+    }, [scrollReady]);
 
     // The server seeds only the current week; fetch the full event set so
     // navigating to any week shows its one-off events and Export All covers everything.
@@ -726,10 +738,10 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                         </div>
                     );
                 })}
-                {/* End-of-night sign-off + buffer so late hours can still scroll near the top */}
-                <div style={{ minHeight: bottomSpacer }}>
-                    <EndOfNight />
-                </div>
+                {/* End-of-night sign-off, then only as much trailing space as the
+                    current hour needs to reach the top (often zero). */}
+                <EndOfNight />
+                <div aria-hidden="true" style={{ height: bottomSpacer }} />
             </div>
 
             {/* Modal */}
