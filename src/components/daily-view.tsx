@@ -41,9 +41,14 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
 
     // Drag & Drop state
     const dragEventIdRef = useRef<string | null>(null);
-    const nineAmRef = useRef<HTMLDivElement>(null);
     const [dragOverHour, setDragOverHour] = useState<number | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+
+    // Auto-scroll: bring the current hour near the top of the grid on load.
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const currentHourRef = useRef<HTMLDivElement>(null);
+    // Buffer below the final hour so even late hours can sit near the top.
+    const [bottomSpacer, setBottomSpacer] = useState(0);
 
     // Live Hour Progress state
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -56,11 +61,28 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
         return () => clearInterval(timer);
     }, []);
 
+    // Size the bottom buffer to (visible height − one hour row) so any hour —
+    // including the last — can be scrolled to the top of the grid.
     useEffect(() => {
-        if (nineAmRef.current) {
-            nineAmRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        const container = scrollRef.current;
+        if (!container) return;
+        const rowH = currentHourRef.current?.offsetHeight ?? 64;
+        setBottomSpacer(Math.max(0, container.clientHeight - rowH));
     }, []);
+
+    // Once the buffer is in place, scroll the current hour near the top.
+    useEffect(() => {
+        if (bottomSpacer <= 0) return;
+        const container = scrollRef.current;
+        const row = currentHourRef.current;
+        if (!container || !row) return;
+        const top =
+            row.getBoundingClientRect().top -
+            container.getBoundingClientRect().top +
+            container.scrollTop -
+            12; // small gap above so it reads as "near top", not flush
+        container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    }, [bottomSpacer]);
 
     // The server seeds only the current week; fetch the full event set so
     // navigating to any week shows its one-off events and Export All covers everything.
@@ -492,7 +514,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
             </nav>
 
             {/* Schedule View */}
-            <div className={clsx(
+            <div ref={scrollRef} className={clsx(
                 "neon-scroll flex-1 bg-black/60 border rounded-3xl glow scanlines overflow-y-auto h-[65vh] max-h-[650px] transition-colors duration-500",
                 getColor(selectedDay).inactiveBorder
             )}>
@@ -535,7 +557,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                     return (
                         <div
                             key={hour.toISOString()}
-                            ref={hourNum === 9 ? nineAmRef : null}
+                            ref={hourNum === currentHour ? currentHourRef : null}
                             className={clsx(
                                 'group border-b border-cyan-500/10 transition-all duration-200 relative overflow-hidden',
                                 dragOverHour === hourNum && isDragging
@@ -703,6 +725,8 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                         </div>
                     );
                 })}
+                {/* Buffer so late hours can still scroll near the top */}
+                <div aria-hidden="true" style={{ height: bottomSpacer }} />
             </div>
 
             {/* Modal */}
