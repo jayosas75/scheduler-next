@@ -42,10 +42,17 @@ export default function ThemeSwitcher() {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
-    // Sync state with whatever the no-flash script already applied.
+    // Sync state with the saved preference, and re-assert it on the document.
+    // The pre-paint inline script in layout.tsx normally applies it first
+    // (no flash); re-applying here is a safety net so the selection still
+    // survives a refresh even if that inline script is ever blocked (e.g. by
+    // CSP in production).
     useEffect(() => {
         const stored = localStorage.getItem(STORAGE_KEY) as ThemePref | null;
-        if (stored && ALL_PREFS.includes(stored)) setCurrent(stored);
+        if (stored && ALL_PREFS.includes(stored)) {
+            setCurrent(stored);
+            applyTheme(stored);
+        }
     }, []);
 
     // Close on outside click or Escape.

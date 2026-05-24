@@ -14,6 +14,7 @@ import { expandEvents } from '@/lib/recurrence-utils';
 import { Share2 } from 'lucide-react';
 import { playSound } from '@/lib/sound';
 import FlipDate from './flip-date';
+import EndOfNight from './end-of-night';
 
 interface Event extends Omit<PrismaEvent, 'recurrenceRule' | 'recurrenceEnd' | 'start' | 'end'> {
     start: Date | string;
@@ -725,8 +726,10 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                         </div>
                     );
                 })}
-                {/* Buffer so late hours can still scroll near the top */}
-                <div aria-hidden="true" style={{ height: bottomSpacer }} />
+                {/* End-of-night sign-off + buffer so late hours can still scroll near the top */}
+                <div style={{ minHeight: bottomSpacer }}>
+                    <EndOfNight />
+                </div>
             </div>
 
             {/* Modal */}
