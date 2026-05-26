@@ -117,7 +117,21 @@ Ordered by **risk vs. priority** — safe, high-impact quick wins first; larger 
 
 ### 🔵 Tier 3 — Larger Features (higher effort/risk, schedule deliberately)
 
-- [ ] **Monthly View**: Add a month-grid (31-day) calendar view alongside the existing week/daily view. Triggered by the **"31 Days"** toggle already placed in the legend bar ([legend.tsx](src/components/legend.tsx)), which is currently a no-op placeholder.
+- [ ] **Finalize Week View**: Polish and complete the day/week view ([daily-view.tsx](src/components/daily-view.tsx)) before transferring its logic to the month view. Subitems below are ordered roughly by dependency.
+
+  - [ ] **Rework Segments Display**: Today an hour's segments collapse into one joined text label (e.g. `"Work (45m) / Break (15m)"`) with a thin left gradient strip ([daily-view.tsx](src/components/daily-view.tsx) ~L633-648). Rework into proportional, category-colored blocks within the hour row so each segment's share of the hour and its label read at a glance.
+
+  - [ ] **Sticky Header**: The hours grid already scrolls in its own container, but the temporal-range nav and day-tab selector scroll away with the page. Pin the day tabs (and ideally the active-day context) to the top of the viewport so the user always knows which day they're editing while scrolling the schedule.
+
+  - [ ] **Rework Segments Modal**: Redesign [segments-modal.tsx](src/components/segments-modal.tsx) — replace the stacked duration/category/label dropdown rows with a clearer visual timeline of the hour and more intuitive duration controls, smoothing the add/edit/remove flow.
+
+  - [ ] **Inspiration Quote / Daily Fact**: Add a small rotating quote/daily-fact component sourced from a local list (CSP-safe, no external API), surfaced somewhere unobtrusive such as the legend bar or an empty-hours state, refreshing per day or per load.
+
+  - [ ] **All-Day Events Strip** *(blocked — needs groundwork)*: There is no all-day concept yet; the `Event` model and `Segment` type are hour-bound (minute offsets 0-60). First introduce an `allDay` flag plus a way to create such events, then render them in a dedicated strip along the top border of the hours grid, separate from the timed slots.
+
+  - [ ] **Login Security & Identity Protection**: Registration is IP rate-limited but the login path ([auth.ts](src/auth.ts)) has no brute-force protection and only a 6-char password minimum. Add login-attempt lockout/rate limiting and stronger password rules, and audit what user data API responses expose; optionally add email verification.
+
+- [ ] **Monthly View**: Add a month-grid (31-day) calendar view alongside the existing week/daily view. Triggered by the **"31 Days"** toggle already placed in the legend bar ([legend.tsx](src/components/legend.tsx)), which is currently a no-op placeholder. Build on top of finalized week view logic.
 - [ ] **Export Format Overhaul**: Harden the iCal (`.ics`) generation in [calendar.ts](src/lib/calendar.ts) (`generateICal`) so exports import seamlessly into **Apple Calendar (Mac/iOS)** and **Google Calendar (Android)** — spec-correct `VCALENDAR`/`VEVENT` structure, timezone handling (`VTIMEZONE`/`TZID` instead of naive local times), stable `UID` + `DTSTAMP`, 75-octet line folding, and full recurrence (`RRULE`) fidelity. Test round-trips on real Mac and Android calendar apps.
 - [ ] **Social Sharing**: Generate "Day at a Glance" images for social media (pairs with the share-links fix in Tier 1).
 - [ ] **AI Netrunner Assistant**: A natural-language command bar to create, shift, or optimize schedules from text requests.

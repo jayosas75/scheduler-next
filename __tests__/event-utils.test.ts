@@ -66,11 +66,13 @@ console.log('\n--- Testing generateBorderGradient ---');
 const singleSegment: MockSegment[] = [{ label: 'Work', category: 'work', offset: 0 }];
 AssertEqual(generateBorderGradient(singleSegment), CATEGORIES.work.hex, 'Single segment should return flat color');
 
+// Segments render proportionally by offset (minutes into the hour):
+// work covers 0–15min (0%–25%), health covers 15–60min (25%–100%).
 const mixedSegments: MockSegment[] = [
     { label: 'Work', category: 'work', offset: 0 },
     { label: 'Health', category: 'health', offset: 15 }
 ];
-const expectedGradient1 = `linear-gradient(to bottom, ${CATEGORIES.work.hex} 0%, ${CATEGORIES.work.hex} 50%, ${CATEGORIES.health.hex} 50%, ${CATEGORIES.health.hex} 100%)`;
+const expectedGradient1 = `linear-gradient(to bottom, ${CATEGORIES.work.hex} 0%, ${CATEGORIES.work.hex} 25%, ${CATEGORIES.health.hex} 25%, ${CATEGORIES.health.hex} 100%)`;
 AssertEqual(generateBorderGradient(mixedSegments), expectedGradient1, 'Mixed segments should return linear gradient');
 
 const sameCategorySegments: MockSegment[] = [

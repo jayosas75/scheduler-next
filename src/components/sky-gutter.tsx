@@ -20,6 +20,7 @@ export default function SkyGutter() {
     const [now, setNow] = useState<Date | null>(null);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- clock initialized after mount, deliberately avoids an SSR/client time mismatch
         setNow(new Date());
         const id = setInterval(() => setNow(new Date()), 60_000);
         return () => clearInterval(id);

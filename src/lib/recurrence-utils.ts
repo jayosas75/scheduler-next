@@ -1,4 +1,5 @@
-import { addDays, addWeeks, addMonths, startOfDay, isBefore, isAfter } from 'date-fns';
+import { addDays, addWeeks, addMonths, isBefore } from 'date-fns';
+import type { Segment } from '@/types';
 
 export type RecurrenceRule = 'daily' | 'weekly' | 'monthly' | null;
 
@@ -10,11 +11,12 @@ export interface RecurringEvent {
     end: Date | string;
     allDay: boolean;
     location?: string | null;
+    details?: string | null;
     category: string;
     deleted: boolean;
     recurrenceRule?: RecurrenceRule;
     recurrenceEnd?: Date | string | null;
-    segments?: any[];
+    segments?: Segment[];
 }
 
 /**

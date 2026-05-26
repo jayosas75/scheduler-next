@@ -8,62 +8,34 @@ import { CATEGORIES, Segment, RecurrenceRule } from '@/types';
 interface SegmentsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (segments: Segment[], recurrenceRule?: RecurrenceRule, recurrenceEnd?: Date | null) => void;
+    onSave: (segments: Segment[], recurrenceRule?: RecurrenceRule, recurrenceEnd?: Date | null, details?: string) => void;
     initialSegments?: Segment[];
     initialRecurrenceRule?: RecurrenceRule;
     initialRecurrenceEnd?: Date | null;
+    initialDetails?: string;
     time: string;
 }
 
-export default function SegmentsModal({ isOpen, onClose, onSave, initialSegments = [], initialRecurrenceRule = null, initialRecurrenceEnd = null, time }: SegmentsModalProps) {
+export default function SegmentsModal({ isOpen, onClose, onSave, initialSegments = [], initialRecurrenceRule = null, initialRecurrenceEnd = null, initialDetails = '', time }: SegmentsModalProps) {
     const [segments, setSegments] = useState<(Segment & { duration: number })[]>([]);
     const [recurrenceRule, setRecurrenceRule] = useState<RecurrenceRule>(null);
     const [recurrenceEnd, setRecurrenceEnd] = useState<string>('');
+    const [details, setDetails] = useState<string>('');
     const [isListening, setIsListening] = useState<number | null>(null);
 
     useEffect(() => {
         if (isOpen) {
             // Initialize recurrence state
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- intentionally resets form state to the provided props each time the modal opens
             setRecurrenceRule(initialRecurrenceRule || null);
             setRecurrenceEnd(initialRecurrenceEnd ? new Date(initialRecurrenceEnd).toISOString().slice(0, 16) : '');
+            setDetails(initialDetails || '');
 
             const init = initialSegments.length > 0 ? initialSegments : [{ label: '', category: 'misc', offset: 0 }];
             const sorted = [...init].sort((a, b) => a.offset - b.offset);
 
-            // Calculate durations and filter out _FREE_ spacers if re-editing
-            const validSegments = sorted.filter(s => s.label !== '_FREE_');
-
-            if (validSegments.length === 0) {
-                validSegments.push({ label: '', category: 'misc', offset: 0 });
-            }
-
-            const withDuration = validSegments.map((s, i) => {
-                // Determine next offset based on next VALID segment
-                const nextOffset = (i < validSegments.length - 1) ? validSegments[i + 1].offset : 60;
-                let dur = nextOffset - s.offset;
-
-                // If the gap was huge (e.g. spacer was removed), set duration to cover it?
-                // Or if we had a spacer, it meant 'free time'.
-                // If we load: Task(0, 15m). Spacer(15, 45m).
-                // Filtered: Task(0).
-                // Next offset? None. Default 60.
-                // Duration = 60 - 0 = 60.
-                // So it "expands" back to full 60 if we don't respect the spacer's existence?
-                // This is tricky. If we just loaded and saved, we'd lose the "15m" setting.
-                // So we MUST NOT filter out spacers when calculating duration?
-                // OR we must imply duration from the *original* list including spacers.
-
-                return { ...s, duration: dur };
-            });
-
-            // Wait, iteration above logic is flawed if I filtered first.
-            // Better: Iterate ALL sorted segments.
-            // If segment is _FREE_, do not add to state, BUT use its offset to cap previous duration.
-            // Actually, if we just keep `_FREE_` segments in state but don't show them in UI?
-            // "15m Activity" -> "45m Free".
-            // If I show "Activity (15m)", it implies the rest is free.
-            // So I should calculate duration based on original list, then map to state.
-
+            // Build state from the original (sorted) list: skip _FREE_ spacers but
+            // use their offset to cap the preceding segment's duration.
             const stateSegments: (Segment & { duration: number })[] = [];
 
             for (let i = 0; i < sorted.length; i++) {
@@ -135,7 +107,7 @@ export default function SegmentsModal({ isOpen, onClose, onSave, initialSegments
     };
 
     const startListening = (index: number) => {
-        // @ts-ignore
+        // @ts-expect-error - SpeechRecognition is a non-standard, vendor-prefixed Web API not in lib.dom types
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
             alert('Voice recognition is not supported in this browser.');
@@ -149,7 +121,7 @@ export default function SegmentsModal({ isOpen, onClose, onSave, initialSegments
 
         recognition.onstart = () => setIsListening(index);
         
-        recognition.onresult = (event: any) => {
+        recognition.onresult = (event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => {
             const transcript = event.results[0][0].transcript;
             const newSegments = [...segments];
             const currentLabel = newSegments[index].label.trim();
@@ -157,7 +129,7 @@ export default function SegmentsModal({ isOpen, onClose, onSave, initialSegments
             setSegments(newSegments);
         };
 
-        recognition.onerror = (event: any) => {
+        recognition.onerror = (event: { error: string }) => {
             console.error('Speech recognition error:', event.error);
             setIsListening(null);
         };
@@ -201,7 +173,7 @@ export default function SegmentsModal({ isOpen, onClose, onSave, initialSegments
         }
 
         const recurrenceEndDate = recurrenceEnd ? new Date(recurrenceEnd) : null;
-        onSave(processedSegments, recurrenceRule, recurrenceEndDate);
+        onSave(processedSegments, recurrenceRule, recurrenceEndDate, details.trim());
     };
 
     return (
@@ -313,6 +285,25 @@ export default function SegmentsModal({ isOpen, onClose, onSave, initialSegments
                             )}
                         </div>
                     ))}
+                </div>
+
+                {/* Event Details */}
+                <div className="mb-6">
+                    <label className="text-[10px] text-cyan-400 uppercase tracking-widest font-bold block mb-2">
+                        Event Details
+                    </label>
+                    <textarea
+                        value={details}
+                        onChange={(e) => setDetails(e.target.value)}
+                        rows={3}
+                        maxLength={1000}
+                        placeholder="Add specifics: location, what to bring, links, prep notes…"
+                        className="w-full bg-black border border-cyan-500/30 text-sm rounded px-3 py-2 text-cyan-100 font-mono focus:border-cyan-400 outline-none resize-none placeholder:text-cyan-500/30"
+                        data-testid="event-details-input"
+                    />
+                    <p className="text-[9px] text-cyan-100/40 mt-1.5 tracking-wide">
+                        Drop the intel future-you will want — where, what to bring, who to ping.
+                    </p>
                 </div>
 
                 <div className="flex justify-between items-center mt-6 pt-6 border-t border-cyan-500/20">

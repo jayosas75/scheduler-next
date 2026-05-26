@@ -53,7 +53,7 @@ export default function Legend() {
 
             {showInfo && (
                 <div className="absolute top-full mt-3 left-0 right-0 bg-black border border-cyan-500/40 p-5 rounded-xl text-xs leading-relaxed glow z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <p className="text-cyan-100/90 italic mb-2 font-mono">"Architecting a legendary existence requires balance across the five primary pillars of the Matrix..."</p>
+                    <p className="text-cyan-100/90 italic mb-2 font-mono">&quot;Architecting a legendary existence requires balance across the five primary pillars of the Matrix...&quot;</p>
                     <div className="space-y-2">
                         <p>
                             <b className="text-cyan-400 uppercase tracking-tighter">Health</b>: The physical and mental vitality that powers your neural link;

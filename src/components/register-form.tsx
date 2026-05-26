@@ -27,14 +27,14 @@ export default function RegisterForm() {
             if (!res.ok) {
                 const data = await res.json();
                 if (data.errors) {
-                    throw new Error(data.errors.map((e: any) => e.message).join(', '));
+                    throw new Error(data.errors.map((e: { message: string }) => e.message).join(', '));
                 }
                 throw new Error(data.message || 'Something went wrong');
             }
 
             router.push('/login?registered=true');
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Something went wrong');
         } finally {
             setPending(false);
         }

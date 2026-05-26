@@ -1,7 +1,6 @@
 'use client';
 
-import { eachHourOfInterval, format, isSameHour, startOfDay, endOfDay, addDays } from 'date-fns';
-import { clsx } from 'clsx';
+import { eachHourOfInterval, format, addDays } from 'date-fns';
 import type { Event } from '@prisma/client';
 
 interface WeekGridProps {

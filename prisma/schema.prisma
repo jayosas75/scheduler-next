@@ -1,8 +1,7 @@
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -90,6 +89,7 @@ model Event {
   end         DateTime
   allDay      Boolean  @default(false)
   location    String?
+  details     String?  // Freeform user notes (location, what to bring, links, prep)
   category    String   @default("misc")
   deleted     Boolean  @default(false)
   

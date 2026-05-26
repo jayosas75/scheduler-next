@@ -10,6 +10,7 @@ export default function SoundToggle() {
     const [muted, setMutedState] = useState(false);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only localStorage read after mount, deliberately avoids a hydration mismatch
         setMutedState(isMuted());
     }, []);
 

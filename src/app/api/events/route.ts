@@ -1,5 +1,6 @@
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -12,6 +13,7 @@ const eventSchema = z.object({
     end: z.string().datetime(),
     allDay: z.boolean().optional(),
     location: z.string().optional().transform((v) => (v === undefined ? v : sanitizeText(v))),
+    details: z.string().optional().transform((v) => (v === undefined ? v : sanitizeText(v, 1000))),
     category: z.string().optional(),
     recurrenceRule: z.enum(['daily', 'weekly', 'monthly']).optional().nullable(),
     recurrenceEnd: z.string().datetime().optional().nullable(),
@@ -51,13 +53,14 @@ export async function POST(req: Request) {
         const body = await req.json();
         const data = eventSchema.parse(body);
 
-        const eventData: any = {
+        const eventData: Prisma.EventUncheckedCreateInput = {
             title: data.title,
             description: data.description,
             start: new Date(data.start),
             end: new Date(data.end),
             allDay: data.allDay || false,
             location: data.location,
+            details: data.details,
             category: data.category || 'misc',
             recurrenceRule: data.recurrenceRule || null,
             recurrenceEnd: data.recurrenceEnd ? new Date(data.recurrenceEnd) : null,
@@ -66,7 +69,7 @@ export async function POST(req: Request) {
 
         if (data.segments && data.segments.length > 0) {
             eventData.segments = {
-                create: data.segments.map((s: any) => ({
+                create: data.segments.map((s) => ({
                     offset: s.offset,
                     label: s.label,
                     category: s.category,
@@ -97,7 +100,7 @@ export async function POST(req: Request) {
     }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
     try {
         const session = await auth();
         if (!session?.user?.email) {

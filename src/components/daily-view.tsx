@@ -2,15 +2,15 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { signOut } from 'next-auth/react';
-import { format, addDays, startOfWeek, eachHourOfInterval, isSameDay, isToday as isDateToday } from 'date-fns';
+import { format, addDays, addMinutes, startOfWeek, eachHourOfInterval, isSameDay, isToday as isDateToday } from 'date-fns';
 import { clsx } from 'clsx';
 import type { Event as PrismaEvent } from '@prisma/client';
-import { ChevronLeft, ChevronRight, Trash2, Pencil, CirclePlus, Settings, Repeat, CalendarDays } from 'lucide-react';
-import { CATEGORIES, Segment, RecurrenceRule } from '@/types';
+import { ChevronLeft, ChevronRight, Trash2, Pencil, CirclePlus, Repeat, CalendarDays } from 'lucide-react';
+import { CATEGORIES, CategoryKey, Segment, RecurrenceRule } from '@/types';
 import Legend from './legend';
 import SegmentsModal from './segments-modal';
 import { generateEventTitle, generateBorderGradient, getButtonState, generateDaySummary } from '@/lib/calendar';
-import { expandEvents } from '@/lib/recurrence-utils';
+import { expandEvents, type RecurringEvent } from '@/lib/recurrence-utils';
 import { Share2 } from 'lucide-react';
 import { playSound } from '@/lib/sound';
 import FlipDate from './flip-date';
@@ -39,6 +39,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
     const [activeEventId, setActiveEventId] = useState<string | null>(null);
     const [activeRecurrenceRule, setActiveRecurrenceRule] = useState<RecurrenceRule>(null);
     const [activeRecurrenceEnd, setActiveRecurrenceEnd] = useState<Date | null>(null);
+    const [activeDetails, setActiveDetails] = useState<string>('');
 
     // Drag & Drop state
     const dragEventIdRef = useRef<string | null>(null);
@@ -168,7 +169,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
     }, [viewingToday, currentHour, currentMinute]);
 
     // Filter events for selected day (including segments and expanded recurring instances)
-    const expandedEvents = expandEvents(events as any, weekStart, addDays(weekStart, 7));
+    const expandedEvents = expandEvents(events as unknown as RecurringEvent[], weekStart, addDays(weekStart, 7));
     const dayEvents = expandedEvents.filter(event =>
         isSameDay(new Date(event.start), selectedDate) && !event.deleted
     );
@@ -182,17 +183,18 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
         setSelectedDay(today.getDay());
     };
 
-    const openSegmentsModal = (hour: Date, existingSegments: Segment[] = [], eventId: string | null = null, recurrenceRule: RecurrenceRule = null, recurrenceEnd: Date | null = null) => {
+    const openSegmentsModal = (hour: Date, existingSegments: Segment[] = [], eventId: string | null = null, recurrenceRule: RecurrenceRule = null, recurrenceEnd: Date | null = null, details: string = '') => {
         playSound('open');
         setActiveHour(hour);
         setActiveSegments(existingSegments);
         setActiveEventId(eventId);
         setActiveRecurrenceRule(recurrenceRule);
         setActiveRecurrenceEnd(recurrenceEnd);
+        setActiveDetails(details);
         setModalOpen(true);
     };
 
-    const handleSaveSegments = async (segments: Segment[], recurrenceRule?: RecurrenceRule, recurrenceEnd?: Date | null) => {
+    const handleSaveSegments = async (segments: Segment[], recurrenceRule?: RecurrenceRule, recurrenceEnd?: Date | null, details?: string) => {
         if (!activeHour) return;
 
         // Calculate duration of NEW segments
@@ -250,6 +252,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
             start: start.toISOString(),
             end: end.toISOString(),
             category: segments[0].category,
+            details: details || null,
             segments: segments,
             recurrenceRule: recurrenceRule || null,
             recurrenceEnd: recurrenceEnd ? recurrenceEnd.toISOString() : null,
@@ -563,7 +566,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                     // If no events, default to misc/cyan
                     if (hourEvents.length === 0) dominantCategory = 'health'; // Use health (cyan) as default "empty" or just keep default styling
 
-                    const catConfig = (CATEGORIES as any)[dominantCategory];
+                    const catConfig = CATEGORIES[dominantCategory as CategoryKey];
                     const timeColorClass = hourEvents.length > 0 ? catConfig.text : 'text-cyan-400';
                     const shadowColor = hourEvents.length > 0 ? (catConfig.hex) : 'rgba(34,211,238,0.5)';
 
@@ -626,27 +629,19 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                                                 : [{ label: event.title, category: event.category || 'misc', offset: 0 }];
                                             const borderGradient = generateBorderGradient(segmentsForBorder);
 
-                                            // Generate dynamic display title with specific durations
-                                            // e.g. "Meeting (45m) / Break (15m)"
-                                            // If legacy (no segments), assume 60m? Or just show Title.
-                                            let displayTitle = event.title;
-                                            if (hasSegments) {
-                                                const sorted = [...event.segments!].sort((a, b) => a.offset - b.offset);
-                                                const parts: string[] = [];
-
-                                                sorted.forEach((s, i) => {
-                                                    if (s.label === '_FREE_') return;
-
-                                                    const next = (i < sorted.length - 1) ? sorted[i + 1].offset : 60;
-                                                    const dur = next - s.offset;
-
-                                                    // Only append duration if it's not the full 60 (redundant?) 
-                                                    // User said "keep the time on there".
-                                                    parts.push(`${s.label} (${dur}m)`);
-                                                });
-
-                                                if (parts.length > 0) displayTitle = parts.join(' / ');
-                                            }
+                                            // Break the hour into display rows: each segment shows its
+                                            // start time, label, duration, and category color. _FREE_
+                                            // spacers are dropped; legacy events (no segments) become a
+                                            // single full-hour row.
+                                            const sortedSegs = hasSegments
+                                                ? [...event.segments!].sort((a, b) => a.offset - b.offset)
+                                                : [{ label: event.title, category: event.category || 'misc', offset: 0 }];
+                                            const segmentRows = sortedSegs
+                                                .map((s, i) => {
+                                                    const next = (i < sortedSegs.length - 1) ? sortedSegs[i + 1].offset : 60;
+                                                    return { ...s, duration: next - s.offset };
+                                                })
+                                                .filter(s => s.label !== '_FREE_');
 
                                             return (
                                                 <div
@@ -675,18 +670,37 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                                                             style={{ background: borderGradient }}
                                                         />
 
-                                                        <div className="flex justify-between items-center pl-3">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="text-xs font-black text-cyan-100 uppercase tracking-wider font-orbitron">
-                                                                    {displayTitle}
-                                                                </div>
+                                                        <div className="flex justify-between items-start gap-2 pl-3">
+                                                            <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                                                                {segmentRows.map((s, si) => {
+                                                                    const cat = CATEGORIES[s.category as CategoryKey] ?? CATEGORIES.misc;
+                                                                    const segTime = format(addMinutes(new Date(event.start), s.offset), 'hh:mm a');
+                                                                    return (
+                                                                        <div key={si} className="flex items-baseline gap-2">
+                                                                            <span className="font-mono text-[10px] tabular-nums text-cyan-300/60 shrink-0 w-[62px]">{segTime}</span>
+                                                                            <span
+                                                                                className="text-xs font-black uppercase tracking-wider font-orbitron truncate"
+                                                                                style={{ color: cat.hex, textShadow: `0 0 6px ${cat.hex}66` }}
+                                                                            >
+                                                                                {s.label || 'Untitled'}
+                                                                            </span>
+                                                                            <span className="text-[10px] font-mono text-cyan-100/30 shrink-0">{s.duration}m</span>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                                {event.details && (
+                                                                    <p className="text-[11px] text-cyan-100/55 leading-snug mt-1 whitespace-pre-wrap break-words">
+                                                                        {event.details}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="flex items-center gap-1 shrink-0">
                                                                 {event.recurrenceRule && (
                                                                     <span title={`Repeats ${event.recurrenceRule}`}>
                                                                         <Repeat size={14} className="text-cyan-400/70" data-testid="recurring-indicator" />
                                                                     </span>
                                                                 )}
-                                                            </div>
-                                                            <div className="flex gap-1 ml-4">
                                                                 <button
                                                                     onClick={() => openSegmentsModal(
                                                                         hour,
@@ -695,16 +709,17 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                                                                             : [{ label: event.title, category: event.category || 'misc', offset: 0 }],
                                                                         event.id,
                                                                         event.recurrenceRule as RecurrenceRule,
-                                                                        event.recurrenceEnd ? new Date(event.recurrenceEnd) : null
+                                                                        event.recurrenceEnd ? new Date(event.recurrenceEnd) : null,
+                                                                        event.details || ''
                                                                     )}
-                                                                    className="text-cyan-400/50 hover:text-cyan-400 transition-colors"
+                                                                    className="text-cyan-400/50 hover:text-cyan-400 transition-colors p-0.5"
                                                                     title="Edit Subroutine"
                                                                 >
                                                                     <Pencil size={16} />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => { playSound('delete'); handleDeleteEvent(event.id); }}
-                                                                    className="text-red-400/50 hover:text-red-400 transition-colors"
+                                                                    className="text-red-400/50 hover:text-red-400 transition-colors p-0.5"
                                                                     title="Delete Subroutine"
                                                                 >
                                                                     <Trash2 size={16} />
@@ -752,6 +767,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                 initialSegments={activeSegments}
                 initialRecurrenceRule={activeRecurrenceRule}
                 initialRecurrenceEnd={activeRecurrenceEnd}
+                initialDetails={activeDetails}
                 time={activeHour ? format(activeHour, 'hh:mm a') : ''}
             />
         </div>

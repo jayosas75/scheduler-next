@@ -57,6 +57,7 @@ export default function ThemeSwitcher() {
     useEffect(() => {
         const stored = localStorage.getItem(STORAGE_KEY) as ThemePref | null;
         if (stored && ALL_PREFS.includes(stored)) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only localStorage read after mount, deliberately avoids a hydration mismatch
             setCurrent(stored);
             applyTheme(stored);
         }

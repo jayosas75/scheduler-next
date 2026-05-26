@@ -38,7 +38,7 @@ export default function ImportPage() {
             } else {
                 setResult({ success: false, message: data.message || 'Import failed' });
             }
-        } catch (error) {
+        } catch {
             setResult({ success: false, message: 'An error occurred during import' });
         } finally {
             setUploading(false);

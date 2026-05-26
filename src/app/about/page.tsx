@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Shield, Zap, Globe, Cpu, Lock, Terminal } from 'lucide-react';
+import { Zap, Globe, Cpu, Lock, Terminal } from 'lucide-react';
 
 export default function AboutPage() {
     return (
@@ -58,10 +58,10 @@ export default function AboutPage() {
                             In the year 2026, time is the only currency that matters. The <span className="text-cyan-400 font-bold">SCHEDULER // 2026</span> was born from the need to organize chaos in a world of information overload.
                         </p>
                         <p>
-                            Developed by rogue netrunners who refused to let their lives be dictated by centralized megacorporations, this tool provides a secure, locally-controlled alternative to the legacy "cloud" calendars of the past.
+                            Developed by rogue netrunners who refused to let their lives be dictated by centralized megacorporations, this tool provides a secure, locally-controlled alternative to the legacy &quot;cloud&quot; calendars of the past.
                         </p>
                         <p>
-                            Whether you're planning your next heist, a corporate meeting, or just your morning coffee, the Chronos Protocol ensures you never miss a beat in the neon-drenched streets of the future.
+                            Whether you&apos;re planning your next heist, a corporate meeting, or just your morning coffee, the Chronos Protocol ensures you never miss a beat in the neon-drenched streets of the future.
                         </p>
                     </div>
 

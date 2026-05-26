@@ -14,7 +14,7 @@ export default function EndOfNight() {
                 <span className="eon-moon" />
             </div>
             <div className="eon-title">SEE YOU TOMORROW</div>
-            <div className="eon-sub">// NEURAL LINK POWERING DOWN</div>
+            <div className="eon-sub">{'// NEURAL LINK POWERING DOWN'}</div>
         </div>
     );
 }

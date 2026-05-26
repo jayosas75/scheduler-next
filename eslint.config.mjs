@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Standalone test scripts and the dev test runner are not app code; they
+    // intentionally use require()/any and run via `npm test`, not the bundler.
+    "__tests__/**",
+    "scripts/**",
   ]),
 ]);
 
