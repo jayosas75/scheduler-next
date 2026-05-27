@@ -144,27 +144,30 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
         const eventStart = new Date(event.start);
         if (eventStart.getHours() !== currentHour) return 'future';
 
-        const eventStartMinute = eventStart.getMinutes();
-
-        // Calculate event end minute from segments
-        let eventEndMinute = 60; // default: assume fills to end of hour
+        // Window of real activity within the hour. Segments partition the hour;
+        // the event is "done" once its last non-_FREE_ segment ends (a trailing
+        // _FREE_ spacer doesn't keep it active), so finished segments stop pulsing.
+        let firstOffset = eventStart.getMinutes();
+        let eventEndMinute = 60;
         if (event.segments && event.segments.length > 0) {
             const sorted = [...event.segments].sort((a, b) => a.offset - b.offset);
-            const firstOffset = sorted[0].offset;
-            const lastSeg = sorted[sorted.length - 1];
-            // End = last segment offset + its duration (to next segment or 60)
-            const lastDuration = 60 - lastSeg.offset;
-            eventEndMinute = lastSeg.offset + lastDuration;
-            // But also consider the event might not start at offset 0
-            // The event occupies from its first segment offset to end
-            if (currentMinute >= eventEndMinute) return 'past';
-            if (currentMinute >= firstOffset) return 'active';
-            return 'future';
+            let firstReal: number | null = null;
+            let lastRealEnd: number | null = null;
+            sorted.forEach((s, i) => {
+                const next = i < sorted.length - 1 ? sorted[i + 1].offset : 60;
+                if (s.label !== '_FREE_') {
+                    if (firstReal === null) firstReal = s.offset;
+                    lastRealEnd = next;
+                }
+            });
+            if (firstReal !== null && lastRealEnd !== null) {
+                firstOffset = firstReal;
+                eventEndMinute = lastRealEnd;
+            }
         }
 
-        // No segments — use the event start minute
-        if (currentMinute >= eventStartMinute + 60) return 'past';
-        if (currentMinute >= eventStartMinute) return 'active';
+        if (currentMinute >= eventEndMinute) return 'past';
+        if (currentMinute >= firstOffset) return 'active';
         return 'future';
     }, [viewingToday, currentHour, currentMinute]);
 
@@ -676,10 +679,10 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                                                                     const cat = CATEGORIES[s.category as CategoryKey] ?? CATEGORIES.misc;
                                                                     const segTime = format(addMinutes(new Date(event.start), s.offset), 'hh:mm a');
                                                                     return (
-                                                                        <div key={si} className="flex items-baseline gap-2">
+                                                                        <div key={si} className="flex items-baseline gap-2 min-w-0">
                                                                             <span className="font-mono text-[10px] tabular-nums text-cyan-300/60 shrink-0 w-[62px]">{segTime}</span>
                                                                             <span
-                                                                                className="text-xs font-black uppercase tracking-wider font-orbitron truncate"
+                                                                                className="text-xs font-black uppercase tracking-wider font-orbitron min-w-0 break-words"
                                                                                 style={{ color: cat.hex, textShadow: `0 0 6px ${cat.hex}66` }}
                                                                             >
                                                                                 {s.label || 'Untitled'}
