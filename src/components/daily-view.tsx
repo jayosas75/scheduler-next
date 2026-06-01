@@ -8,6 +8,7 @@ import type { Event as PrismaEvent } from '@prisma/client';
 import { ChevronLeft, ChevronRight, Trash2, Pencil, CirclePlus, Repeat, CalendarDays } from 'lucide-react';
 import { CATEGORIES, CategoryKey, Segment, RecurrenceRule } from '@/types';
 import Legend from './legend';
+import InspirationQuote from './inspiration-quote';
 import SegmentsModal from './segments-modal';
 import { generateEventTitle, generateBorderGradient, getButtonState, generateDaySummary } from '@/lib/calendar';
 import { expandEvents, type RecurringEvent } from '@/lib/recurrence-utils';
@@ -473,6 +474,9 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
         <div className="flex flex-col min-h-full bg-transparent p-4 lg:p-6">
             {/* Legend & Intro */}
             <Legend />
+
+            {/* Daily inspiration / system transmission */}
+            <InspirationQuote />
 
             {/* Week Navigation */}
             <div className={clsx(

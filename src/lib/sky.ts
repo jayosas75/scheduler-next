@@ -77,3 +77,31 @@ export function getSunPosition(date: Date): SunPosition {
     const altitude = Math.sin(clamped * Math.PI); // 0 at horizons, 1 at peak
     return { body, progress: clamped, altitude };
 }
+
+// ── Moon phase ────────────────────────────────────────────────────────────
+// Phase is essentially a global value: at any given instant the sun-earth-moon
+// geometry is identical for all observers (within a fraction of a percent), so
+// we just use absolute UTC time. Local timezone only shifts which calendar day
+// a given phase falls on — not the phase itself.
+
+/** Average length of one new-moon → next-new-moon cycle (days). */
+const SYNODIC_MONTH = 29.530588853;
+
+/** Reference new moon: 2000-01-06 18:14 UTC (a well-known epoch). */
+const REF_NEW_MOON_MS = Date.UTC(2000, 0, 6, 18, 14);
+
+/**
+ * Position in the lunar cycle as a fraction in [0, 1).
+ *   0    = new moon (dark)        0.25 = first quarter (right half lit)
+ *   0.5  = full moon (fully lit)  0.75 = last quarter  (left half lit)
+ */
+export function getMoonPhase(date: Date): number {
+    const days = (date.getTime() - REF_NEW_MOON_MS) / 86_400_000;
+    const phase = (days / SYNODIC_MONTH) % 1;
+    return phase < 0 ? phase + 1 : phase;
+}
+
+/** Illuminated fraction of the disc, 0 (new) → 1 (full). */
+export function getMoonIllumination(phase: number): number {
+    return (1 - Math.cos(2 * Math.PI * phase)) / 2;
+}

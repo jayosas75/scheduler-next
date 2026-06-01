@@ -4,32 +4,7 @@ import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { sanitizeText } from "@/lib/sanitize";
-
-const eventSchema = z.object({
-    title: z.string().min(1).transform((v) => sanitizeText(v)),
-    description: z.string().optional().transform((v) => (v === undefined ? v : sanitizeText(v))),
-    start: z.string().datetime(),
-    end: z.string().datetime(),
-    allDay: z.boolean().optional(),
-    location: z.string().optional().transform((v) => (v === undefined ? v : sanitizeText(v))),
-    details: z.string().optional().transform((v) => (v === undefined ? v : sanitizeText(v, 1000))),
-    category: z.string().optional(),
-    recurrenceRule: z.enum(['daily', 'weekly', 'monthly']).optional().nullable(),
-    recurrenceEnd: z.string().datetime().optional().nullable(),
-    segments: z.array(z.object({
-        offset: z.number(),
-        label: z.string().transform((v) => sanitizeText(v, 100)),
-        category: z.string(),
-    })).optional(),
-});
-
-const patchSchema = z.object({
-    id: z.string().min(1),
-    start: z.string().datetime().optional(),
-    end: z.string().datetime().optional(),
-    description: z.string().optional(),
-});
+import { eventSchema, patchSchema } from "@/lib/event-schema";
 
 export async function POST(req: Request) {
     try {

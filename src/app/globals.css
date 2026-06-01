@@ -924,19 +924,23 @@ a:hover {
 
 .sky-body {
     position: absolute;
+    transition: left 60s linear, bottom 60s linear;
+}
+.sky-body--sun {
     width: 42px;
     height: 42px;
     margin-left: -21px;
     border-radius: 50%;
-    transition: left 60s linear, bottom 60s linear;
-}
-.sky-body--sun {
     background: radial-gradient(circle, #ffffff 0%, rgba(var(--accent-rgb), 0.95) 40%, transparent 72%);
     box-shadow: 0 0 40px 10px rgba(var(--accent-rgb), 0.45);
 }
 .sky-body--moon {
-    background: radial-gradient(circle at 38% 38%, #ffffff 0%, #cdd6e6 45%, transparent 72%);
-    box-shadow: 0 0 26px 6px rgba(200, 210, 230, 0.4);
+    width: 84px;
+    height: 84px;
+    margin-left: -42px;
+    border-radius: 50%;
+    filter: drop-shadow(0 0 18px rgba(200, 210, 230, 0.35))
+            drop-shadow(0 0 38px rgba(200, 210, 230, 0.2));
 }
 
 @media (prefers-reduced-motion: reduce) {
