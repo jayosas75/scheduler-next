@@ -51,7 +51,8 @@ export default function LoginForm() {
                         </div>
                     </div>
                 </div>
-                <div className="mt-4 flex items-center justify-end">
+                <div className="mt-4 flex items-center justify-between gap-3">
+                    <a href="/forgot-password" className="text-xs text-cyan-400/70 hover:text-cyan-300 font-bold uppercase tracking-wider transition-colors hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]">Forgot Password?</a>
                     <a href="/register" className="text-xs text-fuchsia-400 hover:text-fuchsia-300 font-bold uppercase tracking-wider transition-colors hover:drop-shadow-[0_0_8px_rgba(217,70,239,0.8)]">Create Account</a>
                 </div>
                 <button
