@@ -9,7 +9,7 @@ export default function CalendarLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen bg-black relative overflow-x-hidden">
+        <div className="min-h-screen bg-black relative overflow-x-clip">
             {/* Gutter background. Day-cycle sky prototype — swap back to the
                 static starfield by restoring: <div className="stars-bg z-0" /> */}
             <SkyGutter />
