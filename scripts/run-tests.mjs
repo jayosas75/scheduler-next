@@ -14,7 +14,9 @@ let failed = 0;
 for (const file of files) {
   const path = join(testDir, file);
   // .ts runs through tsx (handles extensionless TS imports); .js runs on plain node.
-  const args = file.endsWith('.ts') ? ['--import', 'tsx', path] : [path];
+  // --env-file-if-exists loads .env when present (DB tests), silent in CI without one.
+  const envFlag = '--env-file-if-exists=.env';
+  const args = file.endsWith('.ts') ? [envFlag, '--import', 'tsx', path] : [envFlag, path];
   console.log(`\n▶ ${file}`);
   const { status } = spawnSync(process.execPath, args, { stdio: 'inherit', cwd: root });
   if (status !== 0) failed++;
