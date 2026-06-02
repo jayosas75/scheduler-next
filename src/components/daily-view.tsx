@@ -12,6 +12,7 @@ import InspirationQuote from './inspiration-quote';
 import SegmentsModal from './segments-modal';
 import { generateEventTitle, generateBorderGradient, getButtonState, generateDaySummary } from '@/lib/calendar';
 import { expandEvents, type RecurringEvent } from '@/lib/recurrence-utils';
+import { getSegmentState } from '@/lib/segment-state';
 import { Share2 } from 'lucide-react';
 import { playSound } from '@/lib/sound';
 import FlipDate from './flip-date';
@@ -582,7 +583,7 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                             key={hour.toISOString()}
                             ref={hourNum === currentHour ? currentHourRef : null}
                             className={clsx(
-                                'group border-b border-cyan-500/10 transition-all duration-200 relative overflow-hidden',
+                                'group border-b border-cyan-500/10 transition-all duration-200 relative overflow-hidden min-h-[88px]',
                                 dragOverHour === hourNum && isDragging
                                     ? 'bg-cyan-500/15 ring-1 ring-cyan-400/60 ring-inset shadow-[inset_0_0_12px_rgba(var(--accent-rgb),0.15)]'
                                     : 'hover:bg-cyan-500/5',
@@ -659,8 +660,6 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                                                         dragEventIdRef.current === event.id
                                                             ? 'opacity-40 scale-95'
                                                             : 'opacity-100',
-                                                        // Live Hour Progress: dim past, highlight active
-                                                        viewingToday && hourNum === currentHour && getEventTimeState(event) === 'past' && 'event-past',
                                                     )}
                                                     draggable
                                                     onDragStart={(e) => handleDragStart(e, event.id)}
@@ -682,8 +681,21 @@ export default function DailyView({ events: initialEvents, initialDate = new Dat
                                                                 {segmentRows.map((s, si) => {
                                                                     const cat = CATEGORIES[s.category as CategoryKey] ?? CATEGORIES.misc;
                                                                     const segTime = format(addMinutes(new Date(event.start), s.offset), 'hh:mm a');
+                                                                    // Per-segment past/active/future state — only when viewing today's
+                                                                    // current hour. Replaces the old event-wide fade so a finished
+                                                                    // segment dims while its later siblings stay bright.
+                                                                    const segState = (viewingToday && hourNum === currentHour)
+                                                                        ? getSegmentState(currentMinute, s.offset, s.offset + s.duration)
+                                                                        : 'future';
                                                                     return (
-                                                                        <div key={si} className="flex items-baseline gap-2 min-w-0">
+                                                                        <div
+                                                                            key={si}
+                                                                            className={clsx(
+                                                                                'flex items-baseline gap-2 min-w-0 rounded-md px-2 -mx-2 transition-all duration-500',
+                                                                                segState === 'past' && 'segment-past',
+                                                                                segState === 'active' && 'segment-active',
+                                                                            )}
+                                                                        >
                                                                             <span className="font-mono text-[10px] tabular-nums text-cyan-300/60 shrink-0 w-[62px]">{segTime}</span>
                                                                             <span
                                                                                 className="text-xs font-black uppercase tracking-wider font-orbitron min-w-0 break-words"

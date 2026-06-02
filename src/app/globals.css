@@ -419,11 +419,18 @@ a:hover {
     animation: time-label-glow 2s ease-in-out infinite;
 }
 
-/* Past events dim + desaturate */
-.event-past {
-    opacity: 0.35;
-    filter: saturate(0.4) brightness(0.7);
-    transition: opacity 0.8s ease, filter 0.8s ease;
+/* Past segment row: dim + desaturate so finished work falls back visually
+   while its sibling segments stay bright. Per-row (replaces .event-past). */
+.segment-past {
+    opacity: 0.4;
+    filter: saturate(0.5) brightness(0.75);
+}
+
+/* Active segment row: subtle accent-tinted fill + accent left edge so the
+   "now" row reads at a glance — without competing with the scanline. */
+.segment-active {
+    background: rgba(var(--accent-rgb), 0.10);
+    box-shadow: inset 2px 0 0 0 rgba(var(--accent-rgb), 0.65);
 }
 
 /* =============================================
