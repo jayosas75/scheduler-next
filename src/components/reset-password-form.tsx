@@ -41,10 +41,10 @@ export default function ResetPasswordForm({ token }: { token: string }) {
         const confirm = fd.get('confirm');
 
         if (typeof password !== 'string' || typeof confirm !== 'string') return;
-        if (password.length < 6) {
+        if (password.length < 8) {
             playSound('error');
             setStatus('error');
-            setMessage('Password must be at least 6 characters.');
+            setMessage('Password must be at least 8 characters.');
             return;
         }
         if (password !== confirm) {
@@ -102,9 +102,9 @@ export default function ResetPasswordForm({ token }: { token: string }) {
                             id="password"
                             type="password"
                             name="password"
-                            placeholder="At least 6 characters"
+                            placeholder="At least 8 characters"
                             required
-                            minLength={6}
+                            minLength={8}
                             autoComplete="new-password"
                         />
                     </div>
@@ -122,7 +122,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
                             name="confirm"
                             placeholder="Repeat your new password"
                             required
-                            minLength={6}
+                            minLength={8}
                             autoComplete="new-password"
                         />
                     </div>

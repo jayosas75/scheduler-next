@@ -46,7 +46,6 @@ export default function LoginForm() {
                                 name="password"
                                 placeholder="Enter password"
                                 required
-                                minLength={6}
                             />
                         </div>
                     </div>

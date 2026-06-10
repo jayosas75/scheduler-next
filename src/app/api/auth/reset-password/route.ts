@@ -4,12 +4,12 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 import { hashToken } from '@/lib/password-reset';
+import { passwordSchema } from '@/lib/password-policy';
 
 const bodySchema = z.object({
     token: z.string().min(32).max(128),
-    // Match the registration policy (auth.ts: min 6). Stronger rules are a
-    // Tier-3 README item — bumping here would diverge from /api/auth/register.
-    password: z.string().min(6),
+    // Same creation policy as /api/auth/register (shared in password-policy.ts).
+    password: passwordSchema,
 });
 
 const GENERIC_INVALID = { message: 'This reset link is invalid or has expired.' };

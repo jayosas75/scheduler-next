@@ -100,9 +100,9 @@ export default function RegisterForm() {
                                 id="password"
                                 type="password"
                                 name="password"
-                                placeholder="Enter password (min 6 characters)"
+                                placeholder="Enter password (min 8 characters)"
                                 required
-                                minLength={6}
+                                minLength={8}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />

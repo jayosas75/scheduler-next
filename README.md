@@ -107,6 +107,25 @@ Synced by the Chronos... the end is not here!
 
 Ordered by **risk vs. priority** — safe, high-impact quick wins first; larger or riskier work later.
 
+### 🔴 Tier 0 — Public Launch Plan (#1 priority — blocks going public)
+
+The prioritized pre-launch checklist (P0 / P1 / P2 tiers, weekly rollout, tool list, cost table) lives in its own file so it stays scannable:
+
+📄 **[LAUNCH.md](LAUNCH.md)** — full plan, updated as items ship.
+
+**The P0 headlines** (must clear before the public link goes out):
+1. Patch Next.js + PostCSS CVEs (`npm audit fix --force`)
+2. Raise password floor 6 → 8 chars, reject obvious garbage
+3. Rate-limit the login path (only register/forgot/reset are throttled today)
+4. Stop leaking which emails are registered on `/api/auth/register`
+5. Sentry + uptime monitor + Supabase backup tier confirmation
+6. Adopt `prisma migrate` (no more silent schema drift)
+7. Privacy policy + ToS + DMARC reporting
+
+**P1 (week 1)** covers Upstash rate-limit, CAPTCHA, email verification, the new-user / suspicious-activity email alerts, account deletion, and the `/api/import` size cap. **P2 (first month)** covers 2FA, OAuth, admin role, a11y, analytics, SEO.
+
+---
+
 ### 🟢 Tier 1 — Quick Wins (low risk, high impact)
 
 ✅ **All cleared** — see the Completed section below.

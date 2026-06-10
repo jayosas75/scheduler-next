@@ -5,10 +5,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { sanitizeText } from "@/lib/sanitize";
+import { passwordSchema } from "@/lib/password-policy";
 
 const registerSchema = z.object({
     email: z.string().email(),
-    password: z.string().min(6),
+    password: passwordSchema,
     name: z.string().min(2).transform((v) => sanitizeText(v, 100)),
 });
 

@@ -21,8 +21,14 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
     providers: [
         Credentials({
             async authorize(credentials) {
+                // Login only *verifies* an existing password — it must not
+                // re-impose the creation policy (min length / complexity), or
+                // accounts made under an older rule would be locked out. The
+                // strong policy lives in password-policy.ts and is enforced at
+                // register + reset, where passwords are set. Here we just need
+                // a non-empty string to hand to bcrypt.compare.
                 const parsedCredentials = z
-                    .object({ email: z.string().email(), password: z.string().min(6) })
+                    .object({ email: z.string().email(), password: z.string().min(1) })
                     .safeParse(credentials);
 
                 if (parsedCredentials.success) {
