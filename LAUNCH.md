@@ -26,7 +26,10 @@ Each item here is a real risk if you don't fix it. Estimated effort in parens.
 ### Reliability + recovery
 
 - [ ] **Confirm Supabase auto-backups are on.** Free tier = 1 daily backup, 7-day retention. Paid (Pro, $25/mo) = point-in-time recovery. For real users, upgrade or take a manual `pg_dump` weekly. *(15 min decision; depends on tier)*
-- [ ] **Move from `prisma db push` to `prisma migrate`.** Today schema drift between local and prod is silent — that's how the `PasswordResetToken` table got missed. Initialize migrations once (`prisma migrate dev --name init` against a fresh DB), then `prisma migrate deploy` in your Vercel build step. *(1 hr, including a careful first-migration check)*
+- [ ] **Move from `prisma db push` to `prisma migrate`.** Today schema drift between local and prod is silent — that's how the `PasswordResetToken` table got missed. **In progress (2026-06-10):**
+  - ✅ **Phase 1 (done):** baselined via `prisma/migrations/0_init` (generated from the current schema — no schema change) and `migrate resolve --applied 0_init` against the local dev DB. `migrate status` → up to date. Migration is **inert** until the build step is wired.
+  - ⏳ **Phase 2 (yours, one-time):** baseline prod the same way so `migrate deploy` won't try to recreate existing tables. With the prod Supabase `DIRECT_URL` exported, run **`npx prisma migrate resolve --applied 0_init`** (non-destructive — records the baseline, touches no data). Confirm `DIRECT_URL` is also set in Vercel's env vars.
+  - ⏳ **Phase 3 (after Phase 2):** change `build` to `prisma migrate deploy && next build` and push. Held back until prod is baselined, or the first deploy fails on "table already exists."
 - [ ] **Error tracking.** Sign up for Sentry (free tier: 5k errors/mo). Drop the Next.js SDK in, wrap the API routes. Without this you only learn things break when a user complains. *(45 min)*
 
 ### Operational hygiene
