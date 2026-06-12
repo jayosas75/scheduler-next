@@ -67,7 +67,10 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
                     if (passwordsMatch) return user;
                 }
 
-                console.log('Invalid credentials');
+                // Structured + IP-only (never the email) so prod logs stay
+                // useful for spotting credential-stuffing without echoing who
+                // was targeted on every failed attempt.
+                console.warn(`[auth] failed login attempt from ip=${ip}`);
                 return null;
             },
         }),
