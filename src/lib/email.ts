@@ -51,6 +51,35 @@ async function send({ to, subject, html, text }: SendArgs): Promise<void> {
     }
 }
 
+export async function sendAccountExists(
+    toEmail: string,
+    signInUrl: string,
+    resetUrl: string,
+): Promise<void> {
+    // Sent when someone tries to register an address that already has an
+    // account. The register route returns its neutral "success" either way, so
+    // this email is the only place the collision is acknowledged — and only the
+    // real inbox owner ever sees it.
+    const subject = 'You already have a Scheduler 2026 account';
+    const text =
+        `Someone just tried to create a Scheduler 2026 account with this email address, ` +
+        `but you already have one — so nothing was created or changed.\n\n` +
+        `If that was you, just sign in:\n${signInUrl}\n\n` +
+        `Forgot your password? Reset it here:\n${resetUrl}\n\n` +
+        `If it wasn't you, you can safely ignore this email.`;
+    const html = `
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #0f172a;">
+  <h2 style="margin: 0 0 16px; font-size: 18px;">You already have an account</h2>
+  <p style="margin: 0 0 16px; line-height: 1.5;">Someone just tried to create a Scheduler 2026 account with this email address, but you already have one — so nothing was created or changed.</p>
+  <p style="margin: 0 0 24px;"><a href="${signInUrl}" style="display: inline-block; padding: 10px 18px; background: #0ea5e9; color: white; border-radius: 6px; text-decoration: none; font-weight: 600;">Sign in</a></p>
+  <p style="margin: 0 0 8px; line-height: 1.5; font-size: 13px; color: #475569;">Forgot your password? <a href="${resetUrl}" style="color: #0ea5e9;">Reset it here</a>.</p>
+  <p style="margin: 0; line-height: 1.5; font-size: 13px; color: #475569;">If it wasn't you, you can safely ignore this email.</p>
+</div>
+`.trim();
+
+    await send({ to: toEmail, subject, html, text });
+}
+
 export async function sendPasswordReset(toEmail: string, resetUrl: string): Promise<void> {
     const subject = 'Reset your Scheduler 2026 password';
     const text =

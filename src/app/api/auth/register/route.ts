@@ -6,12 +6,18 @@ import { z } from "zod";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { sanitizeText } from "@/lib/sanitize";
 import { passwordSchema } from "@/lib/password-policy";
+import { sendAccountExists } from "@/lib/email";
 
 const registerSchema = z.object({
     email: z.string().email(),
     password: passwordSchema,
     name: z.string().min(2).transform((v) => sanitizeText(v, 100)),
 });
+
+// Identical response whether or not the address was already registered, so the
+// endpoint can't be used to enumerate accounts. The register form only keys off
+// res.ok (it redirects to sign-in), so this text is never shown to the user.
+const NEUTRAL_SUCCESS = { message: "Account ready. Please sign in to continue." };
 
 export async function POST(req: Request) {
     try {
@@ -27,31 +33,32 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { email, password, name } = registerSchema.parse(body);
 
+        // Hash regardless of whether the account exists. bcrypt dominates the
+        // request time, so doing it on both branches keeps them indistinguishable
+        // — otherwise "new email = slow, existing email = fast" leaks existence.
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         const existingUser = await prisma.user.findUnique({
             where: { email },
         });
 
         if (existingUser) {
-            return NextResponse.json(
-                { message: "User already exists" },
-                { status: 400 }
-            );
+            // Don't reveal the collision and don't create a duplicate. Nudge the
+            // real inbox owner instead; the caller gets the same neutral success
+            // an actual signup would return.
+            const base = process.env.AUTH_URL ?? new URL(req.url).origin;
+            await sendAccountExists(email, `${base}/login`, `${base}/forgot-password`);
+        } else {
+            await prisma.user.create({
+                data: {
+                    email,
+                    password: hashedPassword,
+                    name,
+                },
+            });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const user = await prisma.user.create({
-            data: {
-                email,
-                password: hashedPassword,
-                name,
-            },
-        });
-
-        return NextResponse.json(
-            { message: "User created successfully", user: { id: user.id, email: user.email, name: user.name } },
-            { status: 201 }
-        );
+        return NextResponse.json(NEUTRAL_SUCCESS, { status: 201 });
     } catch (error) {
         if (error instanceof z.ZodError) {
             return NextResponse.json({ message: "Invalid input", errors: error.issues }, { status: 400 });
